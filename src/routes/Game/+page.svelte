@@ -69,7 +69,8 @@
       // Update the raycaster
       raycaster.setFromCamera(pointer, camera);
 
-      const intersects: any = raycaster.intersectObjects(enemies);
+      const intersects: THREE.Intersection[] =
+        raycaster.intersectObjects(enemies);
       if (intersects.length > 0) {
         // highlights the selected enemy
         if (selectedModel) {
