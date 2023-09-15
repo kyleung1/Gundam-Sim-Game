@@ -1,6 +1,9 @@
 <script lang="ts">
   import * as THREE from "three";
   import { browser } from "$app/environment";
+  import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls.js";
+  import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
+  import { FlyControls } from "three/examples/jsm/controls/FlyControls.js";
 
   if (browser) {
     const scene = new THREE.Scene();
@@ -16,8 +19,45 @@
     document.body.appendChild(renderer.domElement);
     document.body.classList.add("crosshair-cursor");
 
-    const enemies: THREE.Mesh[] = [];
+    class InputController {
+      constructor() {
+        this.initialize();
+      }
+      private current = {
+        leftButton: false,
+        rightButton: false,
+        mouseX: 0,
+        mousey: 0,
+      };
 
+      private previous = null;
+      private keys = {};
+      private previousKeys = {};
+
+      initialize() {
+        document.addEventListener(
+          "mousedown",
+          (e) => this.onMouseDown(e),
+          false,
+        );
+        document.addEventListener("mouseup", (e) => this.onMouseUp(e), false);
+        document.addEventListener(
+          "mousemove",
+          (e) => this.onMouseMove(e),
+          false,
+        );
+        document.addEventListener("keydown", (e) => this.onKeyDown(e), false);
+        document.addEventListener("keyup", (e) => this.onKeyUp(e), false);
+      }
+
+      onMouseDown(e: MouseEvent) {}
+      onMouseUp(e: MouseEvent) {}
+      onMouseMove(e: MouseEvent) {}
+      onKeyDown(e: KeyboardEvent) {}
+      onKeyUp(e: KeyboardEvent) {}
+    }
+
+    const enemies: THREE.Mesh[] = [];
     function addEnemy() {
       const geometry = new THREE.BoxGeometry();
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -54,8 +94,8 @@
     const spaceTexture = new THREE.CubeTextureLoader()
       .setPath("/textures/spaceMap/")
       .load([
-        "left.png",
         "right.png",
+        "left.png",
         "top.png",
         "bottom.png",
         "front.png",
@@ -78,11 +118,38 @@
       renderer.setSize(newWidth, newHeight);
     });
 
-    const rotationSpeed = 0.01;
+    const cameraOrientation = new THREE.Euler(0, 0, 0, "YXZ");
+    const sensitivity = 0.001;
     window.addEventListener("mousemove", (event: MouseEvent) => {
+      // adjust pointer
       pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
       pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      // // adjust camera orientation
+      // cameraOrientation.y -= event.movementX * sensitivity;
+      // cameraOrientation.x -= event.movementY * sensitivity;
+
+      // // Limit the camera's vertical rotation
+      // cameraOrientation.x = Math.max(
+      //   -Math.PI / 2,
+      //   Math.min(Math.PI / 2, cameraOrientation.x),
+      // );
+
+      // const controls = new FirstPersonControls(camera, renderer.domElement);
+      // controls.lookSpeed = sensitivity;
+      // controls.movementSpeed = 5;
+      // controls.lookVertical = false;
     });
+
+    // const controls = new FirstPersonControls(camera, renderer.domElement);
+    // controls.lookSpeed = sensitivity;
+    // controls.movementSpeed = 0.2;
+
+    const controls = new FlyControls(camera, document.body);
+    // document.body.addEventListener("click", () => {
+    //   controls.lock();
+    // });
+    // scene.add(controls.getObject());
 
     window.addEventListener("click", onMouseClick);
 
@@ -110,22 +177,27 @@
         selectedModel = null;
       }
 
-      // travels to target when clicked
-      const moveSpeed = 0.2;
+      // update camera rotation based on orientation
+      camera.setRotationFromEuler(cameraOrientation);
 
-      if (
-        camera.position.x !== targetx ||
-        camera.position.y !== targety ||
-        camera.position.z !== targetz
-      ) {
-        const direction = new THREE.Vector3(
-          targetx - camera.position.x,
-          targety - camera.position.y,
-          targetz - camera.position.z,
-        );
-        direction.normalize();
-        camera.position.add(direction.multiplyScalar(moveSpeed));
-      }
+      // // travels to target when clicked
+      // const moveSpeed = 0.2;
+
+      // if (
+      //   camera.position.x !== targetx ||
+      //   camera.position.y !== targety ||
+      //   camera.position.z !== targetz
+      // ) {
+      //   const direction = new THREE.Vector3(
+      //     targetx - camera.position.x,
+      //     targety - camera.position.y,
+      //     targetz - camera.position.z,
+      //   );
+      //   direction.normalize();
+      //   camera.position.add(direction.multiplyScalar(moveSpeed));
+      // }
+
+      controls.update(1);
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
