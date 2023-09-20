@@ -29,12 +29,11 @@
     let prevTime = performance.now();
     const velocity = new THREE.Vector3();
     const direction = new THREE.Vector3();
-    const vertex = new THREE.Vector3();
-    const color = new THREE.Color();
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let selectedModel: THREE.Mesh | null = null;
+    let moving: boolean = false;
 
     // target position for mouse
     let targetx = 0;
@@ -49,8 +48,8 @@
       const geometry = new THREE.BoxGeometry();
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
       const cube = new THREE.Mesh(geometry, material);
-      cube.position.x = Math.random() * 16 - 8;
-      cube.position.y = Math.random() * 16 - 8;
+      cube.position.x = Math.random() * 10 - 5;
+      cube.position.y = Math.random() * 10 - 5;
       cube.position.z = Math.random() * 10 - 5;
       scene.add(cube);
       enemies.push(cube);
@@ -58,6 +57,7 @@
 
     // Function to handle mouse click
     function onMouseClick(event: MouseEvent) {
+      moving = true;
       if (selectedModel) {
         // Dash to the selected model
         const targetPosition = selectedModel.position.clone();
@@ -121,8 +121,8 @@
       }
     }
 
-    function addEventBlocker() {
-      blocker?.addEventListener("click", () => {
+    function addDocClickEvt() {
+      document?.addEventListener("click", () => {
         controls.lock();
       });
     }
@@ -135,13 +135,13 @@
       blocker?.classList.add("hidden");
     });
 
-    addEventBlocker();
+    addDocClickEvt();
 
     window.addEventListener("click", onMouseClick);
 
     controls.addEventListener("unlock", () => {
       blocker?.classList.remove("hidden");
-      addEventBlocker();
+      addDocClickEvt();
     });
 
     window.addEventListener("resize", () => {
@@ -156,23 +156,12 @@
     const sensitivity = 0.001;
     window.addEventListener("mousemove", (event: MouseEvent) => {
       // adjust pointer
-      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      // // adjust camera orientation
-      // cameraOrientation.y -= event.movementX * sensitivity;
-      // cameraOrientation.x -= event.movementY * sensitivity;
-
-      // // Limit the camera's vertical rotation
-      // cameraOrientation.x = Math.max(
-      //   -Math.PI / 2,
-      //   Math.min(Math.PI / 2, cameraOrientation.x),
-      // );
-
-      // const controls = new FirstPersonControls(camera, renderer.domElement);
-      // controls.lookSpeed = sensitivity;
-      // controls.movementSpeed = 5;
-      // controls.lookVertical = false;
+      // wherever the pointer is
+      // pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      // pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      // at the center of the window
+      pointer.x = 0;
+      pointer.y = 0;
     });
 
     scene.add(controls.getObject());
@@ -180,6 +169,12 @@
     // const controls = new FirstPersonControls(camera, renderer.domElement);
     // controls.lookSpeed = sensitivity;
     // controls.movementSpeed = 0.2;
+
+    const moveSpeed = 0.2; // Adjust this to control the movement speed
+    const geometry = new THREE.SphereGeometry();
+    const fireTexture = new THREE.TextureLoader().load("fire.jpg");
+    const material = new THREE.MeshBasicMaterial({ map: fireTexture });
+    const sphere = new THREE.Mesh(geometry, material);
 
     function animate() {
       // Update the raycaster
@@ -205,27 +200,89 @@
         selectedModel = null;
       }
 
-      // update camera rotation based on orientation
-      // camera.setRotationFromEuler(cameraOrientation);
+      const tolerance = 3; // Adjust this to control how close you want to get to the target
 
-      // // travels to target when clicked
-      // const moveSpeed = 0.2;
+      sphere.rotation.x += 0.01;
+      sphere.rotation.y += 0.01;
 
-      // if (
-      //   camera.position.x !== targetx ||
-      //   camera.position.y !== targety ||
-      //   camera.position.z !== targetz
-      // ) {
-      //   const direction = new THREE.Vector3(
-      //     targetx - camera.position.x,
-      //     targety - camera.position.y,
-      //     targetz - camera.position.z,
-      //   );
-      //   direction.normalize();
-      //   camera.position.add(direction.multiplyScalar(moveSpeed));
+      if (moving) {
+        const cameraPosition = camera.position;
+
+        // Calculate the direction from camera position to target position
+        const newDirection = new THREE.Vector3(
+          targetx - cameraPosition.x,
+          targety - cameraPosition.y,
+          targetz - cameraPosition.z,
+        );
+        newDirection.normalize();
+
+        // Move the camera and controls towards the target
+        cameraPosition.add(newDirection.clone().multiplyScalar(moveSpeed));
+
+        // Check if we've reached the target
+        if (
+          cameraPosition.distanceTo(
+            new THREE.Vector3(targetx, targety, targetz),
+          ) < tolerance
+        ) {
+          moving = false; // Stop moving once we're close enough
+          if (selectedModel) {
+            scene.remove(selectedModel);
+            sphere.position.set(targetx, targety, targetz);
+            scene.add(sphere);
+            setTimeout(() => {
+              scene.remove(sphere);
+              selectedModel = null;
+            }, 2000);
+            // raycaster.intersectObjects([]);
+            // selectedModel = null;
+            console.log(selectedModel);
+          }
+        }
+      }
+
+      const time = performance.now();
+      const delta = (time - prevTime) / 1000;
+      if (controls.isLocked === true) {
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.y -= 0;
+
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        if (moveForward || moveBackward) {
+          velocity.z -= direction.z * 400.0 * delta;
+        } else if (moveLeft || moveRight) {
+          velocity.x -= direction.x * 400.0 * delta;
+        }
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+        controls.getObject().position.y += velocity.y * delta;
+      }
+
+      // if (mouseClicked === true) {
+      //   if (
+      //     camera.position.x !== targetx ||
+      //     camera.position.y !== targety ||
+      //     camera.position.z !== targetz
+      //   ) {
+      //     const clickedDirection = new THREE.Vector3(
+      //       targetx - camera.position.x,
+      //       targety - camera.position.y,
+      //       targetz - camera.position.z,
+      //     );
+      //     clickedDirection.normalize();
+      //     controls
+      //       .getObject()
+      //       .position.add(clickedDirection.multiplyScalar(moveSpeed));
+      //   }
+      //   mouseClicked = false;
       // }
 
-      // controls.update(1);
+      prevTime = time;
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -365,8 +422,9 @@
   // const fpsCamera = new FirstPersonCamera(camera);
 </script>
 
-<!-- {#if showBlocker} -->
-<div class="bg-white w-48 h-48 fixed top-1/2 left-1/2" id="blocker">
-  <h1>Click any where to start</h1>
+<div class="flex justify-center items-center h-screen absolute inset-0">
+  <div class="bg-white w-48 h-48 fixed" id="blocker">
+    <h1>Click any where to start</h1>
+  </div>
+  <img src="crosshair.png" alt="crosshair" class="fixed" />
 </div>
-<!-- {/if} -->
