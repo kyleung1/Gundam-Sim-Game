@@ -1,10 +1,8 @@
 <script lang="ts">
   import * as THREE from "three";
   import { browser } from "$app/environment";
-  import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls.js";
   import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
-  import { FlyControls } from "three/examples/jsm/controls/FlyControls.js";
-  import { onMount, onDestroy } from "svelte";
+  import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
   if (browser) {
     const scene = new THREE.Scene();
@@ -24,7 +22,8 @@
     let moveBackward = false;
     let moveLeft = false;
     let moveRight = false;
-    let canJump = false;
+    let moveUp = false;
+    let moveDown = false;
 
     let prevTime = performance.now();
     const velocity = new THREE.Vector3();
@@ -36,9 +35,9 @@
     let moving: boolean = false;
 
     // target position for mouse
-    let targetx = 0;
-    let targety = 0;
-    let targetz = 15;
+    let targetx: number | null = 0;
+    let targety: number | null = 0;
+    let targetz: number | null = 15;
 
     const controls = new PointerLockControls(camera, document.body);
     const blocker = document.getElementById("blocker");
@@ -91,8 +90,10 @@
           moveRight = true;
           break;
         case "Space":
-          if (canJump === true) velocity.y += 350;
-          canJump = false;
+          moveUp = true;
+          break;
+        case "ShiftLeft":
+          moveDown = true;
           break;
       }
     }
@@ -117,6 +118,12 @@
         case "ArrowRight":
         case "KeyD":
           moveRight = false;
+          break;
+        case "Space":
+          moveUp = false;
+          break;
+        case "ShiftLeft":
+          moveDown = false;
           break;
       }
     }
@@ -171,12 +178,21 @@
     // controls.movementSpeed = 0.2;
 
     const moveSpeed = 0.2; // Adjust this to control the movement speed
+    const tolerance = 3; // Adjust this to control how close you want to get to the target
     const geometry = new THREE.SphereGeometry();
     const fireTexture = new THREE.TextureLoader().load("fire.jpg");
     const material = new THREE.MeshBasicMaterial({ map: fireTexture });
     const sphere = new THREE.Mesh(geometry, material);
+    const glftLoader = new GLTFLoader();
+    let beamSaberModel;
+    glftLoader.load("lightsaber/scene.gltf", (gltfScene) => {
+      beamSaberModel = gltfScene;
+      scene.add(gltfScene.scene);
+    });
 
     function animate() {
+      sphere.rotation.x += 0.01;
+      sphere.rotation.y += 0.01;
       // Update the raycaster
       raycaster.setFromCamera(pointer, camera);
 
@@ -200,43 +216,46 @@
         selectedModel = null;
       }
 
-      const tolerance = 3; // Adjust this to control how close you want to get to the target
-
-      sphere.rotation.x += 0.01;
-      sphere.rotation.y += 0.01;
+      // if (beamSaberModel) {
+      // }
 
       if (moving) {
         const cameraPosition = camera.position;
 
         // Calculate the direction from camera position to target position
-        const newDirection = new THREE.Vector3(
-          targetx - cameraPosition.x,
-          targety - cameraPosition.y,
-          targetz - cameraPosition.z,
-        );
-        newDirection.normalize();
+        if (targetx && targety && targetz) {
+          const newDirection = new THREE.Vector3(
+            targetx - cameraPosition.x,
+            targety - cameraPosition.y,
+            targetz - cameraPosition.z,
+          );
+          newDirection.normalize();
 
-        // Move the camera and controls towards the target
-        cameraPosition.add(newDirection.clone().multiplyScalar(moveSpeed));
+          // Move the camera and controls towards the target
+          cameraPosition.add(newDirection.clone().multiplyScalar(moveSpeed));
 
-        // Check if we've reached the target
-        if (
-          cameraPosition.distanceTo(
-            new THREE.Vector3(targetx, targety, targetz),
-          ) < tolerance
-        ) {
-          moving = false; // Stop moving once we're close enough
-          if (selectedModel) {
-            scene.remove(selectedModel);
-            sphere.position.set(targetx, targety, targetz);
-            scene.add(sphere);
-            setTimeout(() => {
-              scene.remove(sphere);
-              selectedModel = null;
-            }, 2000);
-            // raycaster.intersectObjects([]);
-            // selectedModel = null;
-            console.log(selectedModel);
+          // Check if we've reached the target
+          if (
+            cameraPosition.distanceTo(
+              new THREE.Vector3(targetx, targety, targetz),
+            ) < tolerance
+          ) {
+            moving = false; // Stop moving once we're close enough
+            if (selectedModel) {
+              scene.remove(selectedModel);
+              sphere.position.set(targetx, targety, targetz);
+              scene.add(sphere);
+              setTimeout(() => {
+                scene.remove(sphere);
+                selectedModel = null;
+              }, 2000);
+              // raycaster.intersectObjects([]);
+              // selectedModel = null;
+              console.log(selectedModel);
+              targetx = null;
+              targety = null;
+              targetz = null;
+            }
           }
         }
       }
@@ -246,41 +265,25 @@
       if (controls.isLocked === true) {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 0;
+        velocity.y -= velocity.y * 10.0 * delta;
 
         direction.z = Number(moveForward) - Number(moveBackward);
         direction.x = Number(moveRight) - Number(moveLeft);
+        direction.y = Number(moveUp) - Number(moveDown);
         direction.normalize();
 
         if (moveForward || moveBackward) {
           velocity.z -= direction.z * 400.0 * delta;
         } else if (moveLeft || moveRight) {
           velocity.x -= direction.x * 400.0 * delta;
+        } else if (moveUp || moveDown) {
+          velocity.y -= direction.y * 400.0 * delta;
         }
 
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
-        controls.getObject().position.y += velocity.y * delta;
+        controls.getObject().position.y -= velocity.y * delta;
       }
-
-      // if (mouseClicked === true) {
-      //   if (
-      //     camera.position.x !== targetx ||
-      //     camera.position.y !== targety ||
-      //     camera.position.z !== targetz
-      //   ) {
-      //     const clickedDirection = new THREE.Vector3(
-      //       targetx - camera.position.x,
-      //       targety - camera.position.y,
-      //       targetz - camera.position.z,
-      //     );
-      //     clickedDirection.normalize();
-      //     controls
-      //       .getObject()
-      //       .position.add(clickedDirection.multiplyScalar(moveSpeed));
-      //   }
-      //   mouseClicked = false;
-      // }
 
       prevTime = time;
 

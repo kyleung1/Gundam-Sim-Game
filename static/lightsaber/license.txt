@@ -1,0 +1,11 @@
+Model Information:
+* title:	Obi-Wan's LightSaber
+* source:	https://sketchfab.com/3d-models/obi-wans-lightsaber-6e40dabb7cf3455bae70cebbf107a8a9
+* author:	rkmorello (https://sketchfab.com/rkmorello)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Obi-Wan's LightSaber" (https://sketchfab.com/3d-models/obi-wans-lightsaber-6e40dabb7cf3455bae70cebbf107a8a9) by rkmorello (https://sketchfab.com/rkmorello) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
