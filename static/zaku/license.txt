@@ -1,0 +1,11 @@
+Model Information:
+* title:	Gundam ZAKO - 3
+* source:	https://sketchfab.com/3d-models/gundam-zako-3-0fbcea94273d43ecbb0e9d278bb1ea8e
+* author:	Hiago Tadeu (https://sketchfab.com/HiagoTadeu)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Gundam ZAKO - 3" (https://sketchfab.com/3d-models/gundam-zako-3-0fbcea94273d43ecbb0e9d278bb1ea8e) by Hiago Tadeu (https://sketchfab.com/HiagoTadeu) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

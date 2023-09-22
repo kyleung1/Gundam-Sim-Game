@@ -2,7 +2,10 @@
   import * as THREE from "three";
   import { browser } from "$app/environment";
   import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
-  import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+  import {
+    GLTFLoader,
+    type GLTF,
+  } from "three/examples/jsm/loaders/GLTFLoader.js";
 
   if (browser) {
     const scene = new THREE.Scene();
@@ -42,30 +45,51 @@
     const controls = new PointerLockControls(camera, document.body);
     const blocker = document.getElementById("blocker");
 
+    const glftLoader = new GLTFLoader();
+    const ambientLight = new THREE.AmbientLight(0xffffff);
+    scene.add(ambientLight);
+
     const enemies: THREE.Mesh[] = [];
+    let parentScenes: THREE.Group<THREE.Object3DEventMap>[];
     function addEnemy() {
-      const geometry = new THREE.BoxGeometry();
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.position.x = Math.random() * 10 - 5;
-      cube.position.y = Math.random() * 10 - 5;
-      cube.position.z = Math.random() * 10 - 5;
-      scene.add(cube);
-      enemies.push(cube);
+      let zaku: GLTF;
+      glftLoader.load("zaku/scene.gltf", (gltfScene) => {
+        zaku = gltfScene;
+        zaku.scene.scale.set(1, 1, 1);
+        zaku.scene.position.x = Math.random() * 10 - 5;
+        zaku.scene.position.y = Math.random() * 10 - 5;
+        zaku.scene.position.z = Math.random() * 10 - 5;
+        parentScenes.push(gltfScene.scene);
+        scene.add(gltfScene.scene);
+        gltfScene.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) enemies.push(child);
+        });
+      });
+      // const geometry = new THREE.BoxGeometry();
+      // const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      // const cube = new THREE.Mesh(geometry, material);
+      // cube.position.x = Math.random() * 10 - 5;
+      // cube.position.y = Math.random() * 10 - 5;
+      // cube.position.z = Math.random() * 10 - 5;
+      // scene.add(cube);
+      // enemies.push(cube);
     }
 
     // Function to handle mouse click
     function onMouseClick(event: MouseEvent) {
+      const worldPosition = new THREE.Vector3();
       moving = true;
       if (selectedModel) {
+        selectedModel.updateMatrixWorld();
+        worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
         // Dash to the selected model
         const targetPosition = selectedModel.position.clone();
-        targetx = targetPosition.x;
-        targety = targetPosition.y;
-        targetz = targetPosition.z;
-        console.log("model selected");
+        targetx = worldPosition.x;
+        targety = worldPosition.y + 5;
+        targetz = worldPosition.z;
+        console.log("model selected", targetx, targety, targetz);
       } else {
-        console.log("no model selected");
+        console.log("no model selected", targetx, targety, targetz);
       }
     }
 
@@ -138,7 +162,6 @@
     document.addEventListener("keyup", onKeyUp);
 
     controls.addEventListener("lock", () => {
-      console.log("it is locked");
       blocker?.classList.add("hidden");
     });
 
@@ -159,8 +182,6 @@
       renderer.setSize(newWidth, newHeight);
     });
 
-    const cameraOrientation = new THREE.Euler(0, 0, 0, "YXZ");
-    const sensitivity = 0.001;
     window.addEventListener("mousemove", (event: MouseEvent) => {
       // adjust pointer
       // wherever the pointer is
@@ -173,21 +194,21 @@
 
     scene.add(controls.getObject());
 
-    // const controls = new FirstPersonControls(camera, renderer.domElement);
-    // controls.lookSpeed = sensitivity;
-    // controls.movementSpeed = 0.2;
-
-    const moveSpeed = 0.2; // Adjust this to control the movement speed
-    const tolerance = 3; // Adjust this to control how close you want to get to the target
+    const moveSpeed = 0.7; // Adjust this to control the movement speed
+    const tolerance = 7; // Adjust this to control how close you want to get to the target
     const geometry = new THREE.SphereGeometry();
     const fireTexture = new THREE.TextureLoader().load("fire.jpg");
     const material = new THREE.MeshBasicMaterial({ map: fireTexture });
     const sphere = new THREE.Mesh(geometry, material);
-    const glftLoader = new GLTFLoader();
-    let beamSaberModel;
+    sphere.scale.set(5.5, 5.5, 5.5);
+    let beamSaberModel: GLTF;
     glftLoader.load("lightsaber/scene.gltf", (gltfScene) => {
       beamSaberModel = gltfScene;
-      scene.add(gltfScene.scene);
+      beamSaberModel.scene.scale.set(0.05, 0.05, 0.05);
+      beamSaberModel.scene.rotation.x -= 0;
+      beamSaberModel.scene.rotation.y += 0.9;
+      beamSaberModel.scene.rotation.z -= 0.0;
+      camera.add(gltfScene.scene);
     });
 
     function animate() {
@@ -216,8 +237,11 @@
         selectedModel = null;
       }
 
-      // if (beamSaberModel) {
-      // }
+      if (beamSaberModel) {
+        beamSaberModel.scene.position.x = 0.3;
+        beamSaberModel.scene.position.y = -0.7;
+        beamSaberModel.scene.position.z = -1;
+      }
 
       if (moving) {
         const cameraPosition = camera.position;
