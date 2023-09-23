@@ -50,7 +50,10 @@
     scene.add(ambientLight);
 
     const enemies: THREE.Mesh[] = [];
-    let parentScenes: THREE.Group<THREE.Object3DEventMap>[];
+    interface GroupObject {
+      [key: string]: THREE.Group<THREE.Object3DEventMap> | undefined;
+    }
+    let parentScenes: GroupObject = {};
     function addEnemy() {
       let zaku: GLTF;
       glftLoader.load("zaku/scene.gltf", (gltfScene) => {
@@ -59,7 +62,7 @@
         zaku.scene.position.x = Math.random() * 10 - 5;
         zaku.scene.position.y = Math.random() * 10 - 5;
         zaku.scene.position.z = Math.random() * 10 - 5;
-        parentScenes.push(gltfScene.scene);
+        parentScenes[gltfScene.scene.uuid] = gltfScene.scene;
         scene.add(gltfScene.scene);
         gltfScene.scene.traverse((child) => {
           if (child instanceof THREE.Mesh) enemies.push(child);
@@ -211,7 +214,7 @@
       camera.add(gltfScene.scene);
     });
 
-    function animate() {
+    async function animate() {
       sphere.rotation.x += 0.01;
       sphere.rotation.y += 0.01;
       // Update the raycaster
@@ -220,20 +223,9 @@
       const intersects: THREE.Intersection[] =
         raycaster.intersectObjects(enemies);
       if (intersects.length > 0) {
-        // highlights the selected enemy
-        if (selectedModel) {
-          const material = selectedModel.material as THREE.MeshBasicMaterial;
-          material.color.set(0x00ff00);
-        }
         selectedModel = intersects[0].object as THREE.Mesh;
-        const material = selectedModel.material as THREE.MeshBasicMaterial;
-        material.color.set(0xff0000);
       } else {
         // No intersection, clear the selected model
-        if (selectedModel) {
-          const material = selectedModel.material as THREE.MeshBasicMaterial;
-          material.color.set(0x00ff00);
-        }
         selectedModel = null;
       }
 
@@ -266,16 +258,20 @@
           ) {
             moving = false; // Stop moving once we're close enough
             if (selectedModel) {
-              scene.remove(selectedModel);
+              console.log(selectedModel);
+              const parentSceneId =
+                selectedModel.parent?.parent?.parent?.parent?.uuid;
+              if (parentSceneId !== undefined) {
+                const parentScene = parentScenes[parentSceneId];
+                if (parentScene) scene.remove(parentScene);
+              }
+              console.log(intersects);
+              selectedModel = null;
               sphere.position.set(targetx, targety, targetz);
               scene.add(sphere);
               setTimeout(() => {
                 scene.remove(sphere);
-                selectedModel = null;
               }, 2000);
-              // raycaster.intersectObjects([]);
-              // selectedModel = null;
-              console.log(selectedModel);
               targetx = null;
               targety = null;
               targetz = null;
