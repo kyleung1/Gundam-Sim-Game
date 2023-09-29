@@ -1,0 +1,11 @@
+Model Information:
+* title:	AR-H470
+* source:	https://sketchfab.com/3d-models/ar-h470-4b38c160243743d681d6fdaf3bd77ddb
+* author:	Frostoise (https://sketchfab.com/Frostoise)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "AR-H470" (https://sketchfab.com/3d-models/ar-h470-4b38c160243743d681d6fdaf3bd77ddb) by Frostoise (https://sketchfab.com/Frostoise) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
