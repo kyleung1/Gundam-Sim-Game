@@ -281,6 +281,10 @@
           previousSelectedModel = selectedModel;
           fire = false;
         }
+        // if (!moving) {
+        //   previousSelectedModel = selectedModel;
+        // }
+        // previousSelectedMoel is causing the models to not be removed, need to fix bug
       } else {
         // No intersection, clear the selected model
         selectedModel = null;
@@ -307,7 +311,7 @@
       if (beamRifle && rifleOrSaber === true) {
         const cameraPosition = camera.position.clone();
         // const gunbarrelposition = new THREE.Vector3(
-        //   beamRifle.scene.position.x - 5,
+        //   beamRifle.scene.position.x,
         //   beamRifle.scene.position.y,
         //   beamRifle.scene.position.z,
         // );
@@ -373,9 +377,9 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
-            if (selectedModel) {
+            if (previousSelectedModel) {
               const parentSceneId =
-                selectedModel.parent?.parent?.parent?.parent?.uuid;
+                previousSelectedModel.parent?.parent?.parent?.parent?.uuid;
               if (parentSceneId !== undefined) {
                 const parentScene = parentScenes[parentSceneId];
                 if (parentScene) scene.remove(parentScene);
