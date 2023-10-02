@@ -7,6 +7,11 @@
     type GLTF,
   } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+  interface previousSMDeleted {
+    model: THREE.Mesh | null;
+    deleted: boolean;
+  }
+
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -35,7 +40,10 @@
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let selectedModel: THREE.Mesh | null = null;
-    let previousSelectedModel: THREE.Mesh | null = null;
+    let previousSelectedModel: previousSMDeleted = {
+      model: null,
+      deleted: true,
+    };
     let moving: boolean = false;
     let fire: boolean = false;
 
@@ -278,12 +286,13 @@
       if (intersects.length > 0) {
         selectedModel = intersects[0].object as THREE.Mesh;
         if (fire) {
-          previousSelectedModel = selectedModel;
+          previousSelectedModel.model = selectedModel;
           fire = false;
         }
-        // if (!moving) {
-        //   previousSelectedModel = selectedModel;
-        // }
+        if (moving && previousSelectedModel.deleted) {
+          previousSelectedModel.model = selectedModel;
+          previousSelectedModel.deleted = false;
+        }
         // previousSelectedMoel is causing the models to not be removed, need to fix bug
       } else {
         // No intersection, clear the selected model
@@ -331,9 +340,10 @@
               new THREE.Vector3(targetx, targety, targetz),
             ) < 1
           ) {
-            if (previousSelectedModel) {
+            if (previousSelectedModel.model) {
               const parentSceneId =
-                previousSelectedModel.parent?.parent?.parent?.parent?.uuid;
+                previousSelectedModel.model.parent?.parent?.parent?.parent
+                  ?.uuid;
               if (parentSceneId !== undefined) {
                 const parentScene = parentScenes[parentSceneId];
                 if (parentScene) scene.remove(parentScene);
@@ -377,13 +387,17 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
-            if (previousSelectedModel) {
+            if (previousSelectedModel.model) {
               const parentSceneId =
-                previousSelectedModel.parent?.parent?.parent?.parent?.uuid;
+                previousSelectedModel.model.parent?.parent?.parent?.parent
+                  ?.uuid;
               if (parentSceneId !== undefined) {
                 const parentScene = parentScenes[parentSceneId];
-                if (parentScene) scene.remove(parentScene);
-                console.log("removed");
+                if (parentScene) {
+                  scene.remove(parentScene);
+                  previousSelectedModel.deleted = true;
+                  console.log("removed");
+                }
               }
               sphere.position.set(targetx, targety, targetz);
               scene.add(sphere);
