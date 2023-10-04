@@ -12,6 +12,11 @@
     deleted: boolean;
   }
 
+  interface beams {
+    model: THREE.Mesh | null;
+    direction?: THREE.Vector3;
+  }
+
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -88,7 +93,6 @@
     });
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
-    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
 
     const enemies: THREE.Mesh[] = [];
     interface GroupObject {
@@ -120,40 +124,100 @@
       }
     }
 
-    const beams: THREE.Mesh[] = [];
+    const beams: beams[] = [];
     function fireBeam() {
       fire = true;
+      const beam = new THREE.Mesh(beamGeometry, beamMaterial);
       scene.add(beam);
-      beams.push(beam);
       console.log(beams);
       beam.position.x = camera.position.x;
       beam.position.y = camera.position.y;
       beam.position.z = camera.position.z;
+      const cameraPosition = camera.position.clone();
+
+      if (targetx && targety && targetz) {
+        const newDirection = new THREE.Vector3(
+          targetx - cameraPosition.x,
+          targety - cameraPosition.y,
+          targetz - cameraPosition.z,
+        );
+        newDirection.normalize();
+        const beamObj = {
+          model: beam,
+          direction: newDirection,
+        };
+        beams.push(beamObj);
+      }
+    }
+
+    function updateBeams() {
+      const beamSpeed = 0.7;
+      for (let i = 0; i < beams.length; i++) {
+        const currentBeam = beams[i];
+        if (currentBeam.model && currentBeam.direction) {
+          currentBeam.model?.position.add(
+            currentBeam.direction.clone().multiplyScalar(beamSpeed),
+          );
+          if (targetx && targety && targetz) {
+            if (
+              currentBeam.model.position.distanceTo(
+                new THREE.Vector3(targetx, targety, targetz),
+              ) < 1
+            ) {
+              if (previousSelectedModel.model) {
+                const parentSceneId =
+                  previousSelectedModel.model.parent?.parent?.parent?.parent
+                    ?.uuid;
+                if (parentSceneId !== undefined) {
+                  const parentScene = parentScenes[parentSceneId];
+                  if (parentScene) scene.remove(parentScene);
+                  console.log("removed");
+                }
+              }
+
+              sphere.position.set(targetx, targety, targetz);
+              scene.add(sphere);
+              setTimeout(() => {
+                scene.remove(sphere);
+              }, 2000);
+              targetx = null;
+              targety = null;
+              targetz = null;
+              killCounter++;
+              // checkVictory();
+            }
+          }
+        }
+      }
+
+      // const gunbarrelposition = new THREE.Vector3(
+      //   beamRifle.scene.position.x,
+      //   beamRifle.scene.position.y,
+      //   beamRifle.scene.position.z,
+      // );
     }
 
     // Function to handle mouse click
     function onMouseClick(event: MouseEvent) {
       const worldPosition = new THREE.Vector3();
-      if (rifleOrSaber === false && selectedModel) moving = true;
-      if (rifleOrSaber === true) fireBeam();
 
       if (selectedModel) {
         selectedModel.updateMatrixWorld();
         worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
         // Dash to the selected model
-        const targetPosition = selectedModel.position.clone();
         targetx = worldPosition.x;
         targety = worldPosition.y + 5;
         targetz = worldPosition.z;
-        console.log("model selected", targetx, targety, targetz);
       } else {
         const clickedPosition = new THREE.Vector3();
         raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
         targetx = clickedPosition.x;
         targety = clickedPosition.y;
         targetz = clickedPosition.z;
-        console.log("no model selected", targetx, targety, targetz);
       }
+
+      if (rifleOrSaber === false && selectedModel) moving = true;
+      if (rifleOrSaber === true) fireBeam();
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -267,14 +331,16 @@
       sphere.rotation.x += 0.01;
       sphere.rotation.y += 0.01;
       for (let i = 0; i < beams.length; i++) {
-        beams[i].lookAt(camera.position);
-        beams[i].rotateX((3 * Math.PI) / 2);
+        beams[i].model?.lookAt(camera.position);
+        beams[i].model?.rotateX((3 * Math.PI) / 2);
       }
 
       for (let i = 0; i < enemies.length; i++) {
         enemies[i].lookAt(camera.position);
         enemies[i].rotateX((3 * Math.PI) / 2);
       }
+
+      updateBeams();
 
       // Update the raycaster
       raycaster.setFromCamera(pointer, camera);
@@ -318,51 +384,6 @@
       }
 
       if (beamRifle && rifleOrSaber === true) {
-        const cameraPosition = camera.position.clone();
-        // const gunbarrelposition = new THREE.Vector3(
-        //   beamRifle.scene.position.x,
-        //   beamRifle.scene.position.y,
-        //   beamRifle.scene.position.z,
-        // );
-        if (targetx !== null && targety !== null && targetz !== null) {
-          const newDirection = new THREE.Vector3(
-            targetx - cameraPosition.x,
-            targety - cameraPosition.y,
-            targetz - cameraPosition.z,
-          );
-          newDirection.normalize();
-          const beamSpeed = 0.7;
-
-          beam.position.add(newDirection.clone().multiplyScalar(beamSpeed));
-
-          if (
-            beam.position.distanceTo(
-              new THREE.Vector3(targetx, targety, targetz),
-            ) < 1
-          ) {
-            if (previousSelectedModel.model) {
-              const parentSceneId =
-                previousSelectedModel.model.parent?.parent?.parent?.parent
-                  ?.uuid;
-              if (parentSceneId !== undefined) {
-                const parentScene = parentScenes[parentSceneId];
-                if (parentScene) scene.remove(parentScene);
-                console.log("removed");
-              }
-            }
-
-            sphere.position.set(targetx, targety, targetz);
-            scene.add(sphere);
-            setTimeout(() => {
-              scene.remove(sphere);
-            }, 2000);
-            targetx = null;
-            targety = null;
-            targetz = null;
-            killCounter++;
-            // checkVictory();
-          }
-        }
       }
 
       if (moving) {
