@@ -17,6 +17,13 @@
     direction?: THREE.Vector3;
   }
 
+  interface targetCoords {
+    model: THREE.Mesh | null;
+    x: number;
+    y: number;
+    z: number;
+  }
+
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -49,6 +56,7 @@
       model: null,
       deleted: true,
     };
+    let prevTargetCoords: targetCoords[] = [];
     let moving: boolean = false;
     let fire: boolean = false;
 
@@ -129,7 +137,6 @@
       fire = true;
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
       scene.add(beam);
-      console.log(beams);
       beam.position.x = camera.position.x;
       beam.position.y = camera.position.y;
       beam.position.z = camera.position.z;
@@ -158,33 +165,43 @@
           currentBeam.model?.position.add(
             currentBeam.direction.clone().multiplyScalar(beamSpeed),
           );
-          if (targetx && targety && targetz) {
-            if (
-              currentBeam.model.position.distanceTo(
-                new THREE.Vector3(targetx, targety, targetz),
-              ) < 1
-            ) {
-              if (previousSelectedModel.model) {
-                const parentSceneId =
-                  previousSelectedModel.model.parent?.parent?.parent?.parent
-                    ?.uuid;
-                if (parentSceneId !== undefined) {
-                  const parentScene = parentScenes[parentSceneId];
-                  if (parentScene) scene.remove(parentScene);
-                  console.log("removed");
+          if (prevTargetCoords) {
+            for (let i = 0; i < prevTargetCoords.length; i++) {
+              const currentCoord = prevTargetCoords[i];
+              if (
+                currentBeam.model.position.distanceTo(
+                  new THREE.Vector3(
+                    currentCoord.x,
+                    currentCoord.y,
+                    currentCoord.z,
+                  ),
+                ) < 1
+              ) {
+                if (currentCoord.model) {
+                  const parentSceneId =
+                    currentCoord.model.parent?.parent?.parent?.parent?.uuid;
+                  if (parentSceneId !== undefined) {
+                    const parentScene = parentScenes[parentSceneId];
+                    if (parentScene) scene.remove(parentScene);
+                    console.log("removed");
+                  }
                 }
-              }
 
-              sphere.position.set(targetx, targety, targetz);
-              scene.add(sphere);
-              setTimeout(() => {
-                scene.remove(sphere);
-              }, 2000);
-              targetx = null;
-              targety = null;
-              targetz = null;
-              killCounter++;
-              // checkVictory();
+                sphere.position.set(
+                  currentCoord.x,
+                  currentCoord.y,
+                  currentCoord.z,
+                );
+                scene.add(sphere);
+                setTimeout(() => {
+                  scene.remove(sphere);
+                }, 2000);
+                targetx = null;
+                targety = null;
+                targetz = null;
+                killCounter++;
+                // checkVictory();
+              }
             }
           }
         }
@@ -208,6 +225,15 @@
         targetx = worldPosition.x;
         targety = worldPosition.y + 5;
         targetz = worldPosition.z;
+
+        const targetObj = {
+          x: targetx,
+          y: targety,
+          z: targetz,
+          model: selectedModel,
+        };
+
+        prevTargetCoords.push(targetObj);
       } else {
         const clickedPosition = new THREE.Vector3();
         raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
