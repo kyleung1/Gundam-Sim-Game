@@ -79,9 +79,9 @@
     const moveSpeed = 0.7; // Adjust this to control the movement speed
     const geometry = new THREE.SphereGeometry();
     const fireTexture = new THREE.TextureLoader().load("fire.jpg");
-    const material = new THREE.MeshBasicMaterial({ map: fireTexture });
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.scale.set(5.5, 5.5, 5.5);
+    const fireMaterial = new THREE.MeshBasicMaterial({ map: fireTexture });
+    let explosionList: THREE.Mesh[] = [];
+
     let beamSaberModel: GLTF;
     glftLoader.load("lightsaber/scene.gltf", (gltfScene) => {
       beamSaberModel = gltfScene;
@@ -186,12 +186,14 @@
                     console.log("removed");
                   }
                 }
-
+                const sphere = new THREE.Mesh(geometry, fireMaterial);
+                sphere.scale.set(5.5, 5.5, 5.5);
                 sphere.position.set(
                   currentCoord.x,
                   currentCoord.y,
                   currentCoord.z,
                 );
+                explosionList.push(sphere);
                 scene.add(sphere);
                 setTimeout(() => {
                   scene.remove(sphere);
@@ -354,8 +356,12 @@
 
     async function animate() {
       // animation function here animation function here animation function here animation function here animation function here animation function here
-      sphere.rotation.x += 0.01;
-      sphere.rotation.y += 0.01;
+      explosionList.forEach((explosion) => {
+        explosion.rotation.x += 0.01;
+        explosion.rotation.y += 0.01;
+      });
+      // sphere.rotation.x += 0.01;
+      // sphere.rotation.y += 0.01;
       for (let i = 0; i < beams.length; i++) {
         beams[i].model?.lookAt(camera.position);
         beams[i].model?.rotateX((3 * Math.PI) / 2);
@@ -446,7 +452,10 @@
                   console.log("removed");
                 }
               }
+              const sphere = new THREE.Mesh(geometry, fireMaterial);
+              sphere.scale.set(5.5, 5.5, 5.5);
               sphere.position.set(targetx, targety, targetz);
+              explosionList.push(sphere);
               scene.add(sphere);
               setTimeout(() => {
                 scene.remove(sphere);
