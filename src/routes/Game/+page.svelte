@@ -24,6 +24,11 @@
     z: number;
   }
 
+  let shots = 16;
+
+  let killCounter = 0;
+  let rifleOrSaber = false; // true will mean rifle and false will mean saber
+
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -64,9 +69,6 @@
     let targetx: number | null = 0;
     let targety: number | null = 0;
     let targetz: number | null = 15;
-
-    let killCounter = 0;
-    let rifleOrSaber = false; // true will mean rifle and false will mean saber
 
     const controls = new PointerLockControls(camera, document.body);
     const blocker = document.getElementById("blocker");
@@ -135,6 +137,7 @@
     const beams: beams[] = [];
     function fireBeam() {
       fire = true;
+      shots--;
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
       scene.add(beam);
       beam.position.x = camera.position.x;
@@ -245,7 +248,7 @@
       }
 
       if (rifleOrSaber === false && selectedModel) moving = true;
-      if (rifleOrSaber === true) fireBeam();
+      if (rifleOrSaber === true && shots > 0) fireBeam();
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -643,4 +646,19 @@
     <h1>All Enemies have been defeated.</h1>
   </div>
   <img src="crosshair.png" alt="crosshair" class="fixed" />
+</div>
+<div
+  class="border-2 border-neutral-400 w-48 h-48 fixed text-neutral-400"
+  id="gui"
+>
+  <p class="text-xl">
+    Weapon Equipped: {#if rifleOrSaber}
+      <div class="flex flex-col">
+        <span>Beam Rifle</span>
+        <span class="text-xl">Shots: {shots}/16</span>
+      </div>
+    {/if}
+    {#if !rifleOrSaber}
+      Beam Saber{/if}
+  </p>
 </div>
