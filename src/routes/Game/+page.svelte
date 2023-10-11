@@ -6,6 +6,11 @@
     GLTFLoader,
     type GLTF,
   } from "three/examples/jsm/loaders/GLTFLoader.js";
+  import {
+    CSS3DRenderer,
+    CSS3DObject,
+    CSS3DSprite,
+  } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 
   interface previousSMDeleted {
     model: THREE.Mesh | null;
@@ -24,7 +29,7 @@
     z: number;
   }
 
-  let shots = 16;
+  let ammo = 16;
 
   let killCounter = 0;
   let rifleOrSaber = false; // true will mean rifle and false will mean saber
@@ -37,10 +42,15 @@
       0.1,
       1000,
     );
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    const webglRenderer = new THREE.WebGLRenderer();
+    const CSS3Drenderer = new CSS3DRenderer();
+    webglRenderer.setPixelRatio(window.devicePixelRatio);
+    webglRenderer.setSize(window.innerWidth, window.innerHeight);
+    CSS3Drenderer.setSize(window.innerWidth, window.innerHeight);
+    CSS3Drenderer.domElement.style.position = "absolute";
+    CSS3Drenderer.domElement.style.top = "0";
+    document.body.appendChild(webglRenderer.domElement);
+    document.body.appendChild(CSS3Drenderer.domElement);
     document.body.classList.add("crosshair-cursor");
 
     let moveForward = false;
@@ -61,14 +71,14 @@
       model: null,
       deleted: true,
     };
-    let prevTargetCoords: targetCoords[] = [];
+    let prevTargetCoords: targetCoords[] = []; // only needed to keep track of targets for the beams
     let moving: boolean = false;
     let fire: boolean = false;
 
     // target position for mouse
-    let targetx: number | null = 0;
-    let targety: number | null = 0;
-    let targetz: number | null = 15;
+    let targetx: number | null = null;
+    let targety: number | null = null;
+    let targetz: number | null = null;
 
     const controls = new PointerLockControls(camera, document.body);
     const blocker = document.getElementById("blocker");
@@ -104,6 +114,28 @@
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
 
+    //     const keyframes = [
+    //   { time: 0, value: 0 }, // Initial position (rotation)
+    //   { time: 0.2, value: Math.PI / 4 }, // Mid-swing position
+    //   { time: 0.4, value: 0 }, // Return to initial position
+    // ];
+
+    // // Create a keyframe track for sword rotation
+    // const swordRotationTrack = new THREE.KeyframeTrack(
+    //   '.rotation[y]',
+    //   keyframes.map((keyframe) => keyframe.time),
+    //   keyframes.map((keyframe) => keyframe.value)
+    // );
+    // const swordSwingClip = new THREE.AnimationClip('swordSwing', 0.4, [swordRotationTrack]);
+    // const swordMixer = new THREE.AnimationMixer(beamSaberModel);
+    // const swingAction = swordMixer.clipAction(swordSwingClip);
+    // // Play the animation
+    // action.play();
+
+    // // In your animation loop or update function
+    // const deltaTime = clock.getDelta(); // Get time since last frame
+    // mixer.update(deltaTime); // Update the animation
+
     const enemies: THREE.Mesh[] = [];
     interface GroupObject {
       [key: string]: THREE.Group<THREE.Object3DEventMap> | undefined;
@@ -137,7 +169,7 @@
     const beams: beams[] = [];
     function fireBeam() {
       fire = true;
-      shots--;
+      ammo--;
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
       scene.add(beam);
       beam.position.x = camera.position.x;
@@ -185,8 +217,11 @@
                     currentCoord.model.parent?.parent?.parent?.parent?.uuid;
                   if (parentSceneId !== undefined) {
                     const parentScene = parentScenes[parentSceneId];
-                    if (parentScene) scene.remove(parentScene);
-                    console.log("removed");
+                    if (parentScene) {
+                      scene.remove(parentScene);
+                      prevTargetCoords.splice(i, 1);
+                      console.log("removed");
+                    }
                   }
                 }
                 const sphere = new THREE.Mesh(geometry, fireMaterial);
@@ -205,7 +240,7 @@
                 targety = null;
                 targetz = null;
                 killCounter++;
-                // checkVictory();
+                checkVictory();
               }
             }
           }
@@ -219,6 +254,29 @@
       // );
     }
 
+    // css3d popup when hovering an enemy
+    const highlightDiv = document.createElement("div");
+    highlightDiv.innerHTML =
+      "<h1 class='text-red-500 bg-white p-5'>ENEMY_ZAKO_3_0</h1>";
+    // highlightDiv.style.transform = "scale(0.1)";
+    const highlight = new CSS3DObject(highlightDiv);
+    highlight.scale.set(0.1, 0.1, 0.1);
+    function highlightEnemy() {
+      console.log(selectedModel);
+      if (selectedModel) {
+        // highlight.position.set(
+        //   camera.position.x + 5,
+        //   camera.position.y + 5,
+        //   camera.position.z - 50,
+        // );
+        if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+          scene.add(highlight);
+        }
+      } else {
+        scene.remove(highlight);
+      }
+    }
+
     // Function to handle mouse click
     function onMouseClick(event: MouseEvent) {
       const worldPosition = new THREE.Vector3();
@@ -228,17 +286,22 @@
         worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
         // Dash to the selected model
         targetx = worldPosition.x;
-        targety = worldPosition.y + 5;
+        targety = worldPosition.y;
         targetz = worldPosition.z;
 
-        const targetObj = {
-          x: targetx,
-          y: targety,
-          z: targetz,
-          model: selectedModel,
-        };
+        if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+          targety = worldPosition.y + 5;
 
-        prevTargetCoords.push(targetObj);
+          const targetObj = {
+            x: targetx,
+            y: targety,
+            z: targetz,
+            model: selectedModel,
+          };
+
+          if (rifleOrSaber === true && ammo > 0)
+            prevTargetCoords.push(targetObj);
+        }
       } else {
         const clickedPosition = new THREE.Vector3();
         raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
@@ -248,7 +311,7 @@
       }
 
       if (rifleOrSaber === false && selectedModel) moving = true;
-      if (rifleOrSaber === true && shots > 0) fireBeam();
+      if (rifleOrSaber === true && ammo > 0) fireBeam();
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -342,7 +405,7 @@
       const newHeight = window.innerHeight;
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
+      webglRenderer.setSize(newWidth, newHeight);
     });
 
     window.addEventListener("mousemove", (event: MouseEvent) => {
@@ -359,12 +422,17 @@
 
     async function animate() {
       // animation function here animation function here animation function here animation function here animation function here animation function here
+      highlight.position.set(
+        camera.position.x + 10,
+        camera.position.y + 10,
+        camera.position.z - 50,
+      );
+
       explosionList.forEach((explosion) => {
         explosion.rotation.x += 0.01;
         explosion.rotation.y += 0.01;
       });
-      // sphere.rotation.x += 0.01;
-      // sphere.rotation.y += 0.01;
+
       for (let i = 0; i < beams.length; i++) {
         beams[i].model?.lookAt(camera.position);
         beams[i].model?.rotateX((3 * Math.PI) / 2);
@@ -386,6 +454,7 @@
       );
       if (intersects.length > 0) {
         selectedModel = intersects[0].object as THREE.Mesh;
+        highlightEnemy();
         if (fire) {
           previousSelectedModel.model = selectedModel;
           fire = false;
@@ -467,7 +536,7 @@
               targety = null;
               targetz = null;
               killCounter++;
-              // checkVictory();
+              checkVictory();
             }
           }
         }
@@ -500,7 +569,8 @@
 
       prevTime = time;
 
-      renderer.render(scene, camera);
+      webglRenderer.render(scene, camera);
+      CSS3Drenderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
 
@@ -647,18 +717,26 @@
   </div>
   <img src="crosshair.png" alt="crosshair" class="fixed" />
 </div>
+
 <div
-  class="border-2 border-neutral-400 w-48 h-48 fixed text-neutral-400"
+  class="border-4 border-blue-400 w-56 h-48 fixed text-neutral-400 my-16 mx-16"
   id="gui"
 >
-  <p class="text-xl">
-    Weapon Equipped: {#if rifleOrSaber}
-      <div class="flex flex-col">
-        <span>Beam Rifle</span>
-        <span class="text-xl">Shots: {shots}/16</span>
-      </div>
-    {/if}
-    {#if !rifleOrSaber}
-      Beam Saber{/if}
-  </p>
+  <div class="border-4 border-cyan-400 h-full">
+    <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
+      <p class="text-xl flex flex-col p-0">
+        Weapon Equipped: {#if rifleOrSaber}
+          <div class="flex flex-col">
+            <span>Beam Rifle</span>
+            <span class="">Ammo: {ammo}/16</span>
+          </div>
+        {/if}
+        {#if !rifleOrSaber}
+          <span>Beam Saber</span>
+        {/if}
+
+        <span>Enemies Remaining: {10 - killCounter}</span>
+      </p>
+    </div>
+  </div>
 </div>
