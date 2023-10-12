@@ -257,23 +257,50 @@
     // css3d popup when hovering an enemy
     const highlightDiv = document.createElement("div");
     highlightDiv.innerHTML =
-      "<h1 class='text-red-500 bg-white p-5'>ENEMY_ZAKO_3_0</h1>";
-    // highlightDiv.style.transform = "scale(0.1)";
+      "<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Random text Random text Random text Random text Random text Random text</p></div>";
     const highlight = new CSS3DObject(highlightDiv);
-    highlight.scale.set(0.1, 0.1, 0.1);
+    highlight.scale.set(0.03, 0.03, 0.03);
+    const points1 = [
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-5, 0, 0),
+      new THREE.Vector3(-5, 10, 0),
+      new THREE.Vector3(0, 10, 0),
+    ];
+    const points2 = [
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(5, 0, 0),
+      new THREE.Vector3(5, 10, 0),
+      new THREE.Vector3(0, 10, 0),
+    ];
+
+    // Create geometry by extruding the shape
+    const bracketGeometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+    const bracketGeometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+    const bracketMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+    });
+    const bracket1 = new THREE.Line(bracketGeometry1, bracketMaterial);
+    const bracket2 = new THREE.Line(bracketGeometry2, bracketMaterial);
+
     function highlightEnemy() {
-      console.log(selectedModel);
       if (selectedModel) {
-        // highlight.position.set(
-        //   camera.position.x + 5,
-        //   camera.position.y + 5,
-        //   camera.position.z - 50,
-        // );
         if (selectedModel.name === "ENEMY_ZAKO_3_0") {
-          scene.add(highlight);
+          highlight.position.set(5, 3, -15);
+
+          // bracket.position.set(
+          //   selectedModel.position.x - 10,
+          //   selectedModel.position.y,
+          //   selectedModel.position.z,
+          // );
+          scene.add(bracket1);
+          scene.add(bracket2);
+          camera.add(highlight);
+          // scene.add(line);
         }
       } else {
-        scene.remove(highlight);
+        scene.remove(bracket1);
+        scene.remove(bracket2);
+        camera.remove(highlight);
       }
     }
 
@@ -422,11 +449,11 @@
 
     async function animate() {
       // animation function here animation function here animation function here animation function here animation function here animation function here
-      highlight.position.set(
-        camera.position.x + 10,
-        camera.position.y + 10,
-        camera.position.z - 50,
-      );
+      // highlight.position.set(
+      //   camera.position.x + 10,
+      //   camera.position.y + 10,
+      //   camera.position.z - 50,
+      // );
 
       explosionList.forEach((explosion) => {
         explosion.rotation.x += 0.01;
@@ -444,6 +471,7 @@
       }
 
       updateBeams();
+      highlightEnemy();
 
       // Update the raycaster
       raycaster.setFromCamera(pointer, camera);
@@ -454,7 +482,6 @@
       );
       if (intersects.length > 0) {
         selectedModel = intersects[0].object as THREE.Mesh;
-        highlightEnemy();
         if (fire) {
           previousSelectedModel.model = selectedModel;
           fire = false;
