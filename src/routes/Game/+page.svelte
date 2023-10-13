@@ -153,9 +153,9 @@
       glftLoader.load("zaku/scene.gltf", (gltfScene) => {
         zaku = gltfScene;
         zaku.scene.scale.set(1, 1, 1);
-        zaku.scene.position.x = Math.random() * 100 - 50;
-        zaku.scene.position.y = Math.random() * 100 - 50;
-        zaku.scene.position.z = Math.random() * 100 - 50;
+        zaku.scene.position.x = Math.random() * 200 - 100;
+        zaku.scene.position.y = Math.random() * 200 - 100;
+        zaku.scene.position.z = Math.random() * 200 - 100;
         parentScenes[gltfScene.scene.uuid] = gltfScene.scene;
         scene.add(gltfScene.scene);
         gltfScene.scene.traverse((child) => {
@@ -247,7 +247,7 @@
                 targetx = null;
                 targety = null;
                 targetz = null;
-                checkVictory();
+                // checkVictory();
               }
             }
           }
@@ -560,7 +560,7 @@
               targetx = null;
               targety = null;
               targetz = null;
-              checkVictory();
+              // checkVictory();
             }
           }
         }
@@ -614,7 +614,7 @@
       ]);
     scene.background = spaceTexture;
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       addEnemy();
     }
 
@@ -761,7 +761,7 @@
           <span>Beam Saber</span>
         {/if}
 
-        <span>Enemies Remaining: {10 - killCounter}</span>
+        <span>Enemies Remaining: {15 - killCounter}</span>
       </p>
     </div>
   </div>
