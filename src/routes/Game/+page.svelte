@@ -34,6 +34,8 @@
   let killCounter = 0;
   let rifleOrSaber = false; // true will mean rifle and false will mean saber
 
+  let controlsLocked = false;
+
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -51,7 +53,6 @@
     CSS3Drenderer.domElement.style.top = "0";
     document.body.appendChild(webglRenderer.domElement);
     document.body.appendChild(CSS3Drenderer.domElement);
-    document.body.classList.add("crosshair-cursor");
 
     let moveForward = false;
     let moveBackward = false;
@@ -84,6 +85,34 @@
     const blocker = document.getElementById("blocker");
     const victoryScreen = document.getElementById("victory-screen");
 
+    // css3d popup when hovering an enemy
+    const highlightDiv = document.createElement("div");
+    highlightDiv.innerHTML =
+      "<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Random text Random text Random text Random text Random text Random text</p></div>";
+    const highlight = new CSS3DObject(highlightDiv);
+    highlight.scale.set(0.03, 0.03, 0.03);
+    const points1 = [
+      new THREE.Vector3(-2, -1, 0),
+      new THREE.Vector3(-4, -1, 0),
+      new THREE.Vector3(-4, 10, 0),
+      new THREE.Vector3(-2, 10, 0),
+    ];
+    const points2 = [
+      new THREE.Vector3(2, -1, 0),
+      new THREE.Vector3(4, -1, 0),
+      new THREE.Vector3(4, 10, 0),
+      new THREE.Vector3(2, 10, 0),
+    ];
+
+    // Create geometry by extruding the shape
+    const bracketGeometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+    const bracketGeometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+    const bracketMaterial = new THREE.MeshBasicMaterial({
+      color: 0x22d3ee,
+    });
+    const bracket1 = new THREE.Line(bracketGeometry1, bracketMaterial);
+    const bracket2 = new THREE.Line(bracketGeometry2, bracketMaterial);
+
     const glftLoader = new GLTFLoader();
     const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
@@ -113,28 +142,6 @@
     });
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
-
-    //     const keyframes = [
-    //   { time: 0, value: 0 }, // Initial position (rotation)
-    //   { time: 0.2, value: Math.PI / 4 }, // Mid-swing position
-    //   { time: 0.4, value: 0 }, // Return to initial position
-    // ];
-
-    // // Create a keyframe track for sword rotation
-    // const swordRotationTrack = new THREE.KeyframeTrack(
-    //   '.rotation[y]',
-    //   keyframes.map((keyframe) => keyframe.time),
-    //   keyframes.map((keyframe) => keyframe.value)
-    // );
-    // const swordSwingClip = new THREE.AnimationClip('swordSwing', 0.4, [swordRotationTrack]);
-    // const swordMixer = new THREE.AnimationMixer(beamSaberModel);
-    // const swingAction = swordMixer.clipAction(swordSwingClip);
-    // // Play the animation
-    // action.play();
-
-    // // In your animation loop or update function
-    // const deltaTime = clock.getDelta(); // Get time since last frame
-    // mixer.update(deltaTime); // Update the animation
 
     const enemies: THREE.Mesh[] = [];
     interface GroupObject {
@@ -221,6 +228,7 @@
                       scene.remove(parentScene);
                       prevTargetCoords.splice(i, 1);
                       console.log("removed");
+                      killCounter++;
                     }
                   }
                 }
@@ -239,7 +247,6 @@
                 targetx = null;
                 targety = null;
                 targetz = null;
-                killCounter++;
                 checkVictory();
               }
             }
@@ -254,44 +261,25 @@
       // );
     }
 
-    // css3d popup when hovering an enemy
-    const highlightDiv = document.createElement("div");
-    highlightDiv.innerHTML =
-      "<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Random text Random text Random text Random text Random text Random text</p></div>";
-    const highlight = new CSS3DObject(highlightDiv);
-    highlight.scale.set(0.03, 0.03, 0.03);
-    const points1 = [
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-5, 0, 0),
-      new THREE.Vector3(-5, 10, 0),
-      new THREE.Vector3(0, 10, 0),
-    ];
-    const points2 = [
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(5, 0, 0),
-      new THREE.Vector3(5, 10, 0),
-      new THREE.Vector3(0, 10, 0),
-    ];
-
-    // Create geometry by extruding the shape
-    const bracketGeometry1 = new THREE.BufferGeometry().setFromPoints(points1);
-    const bracketGeometry2 = new THREE.BufferGeometry().setFromPoints(points2);
-    const bracketMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ff00,
-    });
-    const bracket1 = new THREE.Line(bracketGeometry1, bracketMaterial);
-    const bracket2 = new THREE.Line(bracketGeometry2, bracketMaterial);
-
     function highlightEnemy() {
+      const worldPosition = new THREE.Vector3();
       if (selectedModel) {
         if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+          selectedModel.updateMatrixWorld();
+          worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
           highlight.position.set(5, 3, -15);
-
-          // bracket.position.set(
-          //   selectedModel.position.x - 10,
-          //   selectedModel.position.y,
-          //   selectedModel.position.z,
-          // );
+          bracket1.position.set(
+            worldPosition.x,
+            worldPosition.y,
+            worldPosition.z,
+          );
+          bracket2.position.set(
+            worldPosition.x,
+            worldPosition.y,
+            worldPosition.z,
+          );
+          bracket1.lookAt(camera.position);
+          bracket2.lookAt(camera.position);
           scene.add(bracket1);
           scene.add(bracket2);
           camera.add(highlight);
@@ -337,7 +325,12 @@
         targetz = clickedPosition.z;
       }
 
-      if (rifleOrSaber === false && selectedModel) moving = true;
+      if (
+        rifleOrSaber === false &&
+        selectedModel &&
+        selectedModel.name === "ENEMY_ZAKO_3_0"
+      )
+        moving = true;
       if (rifleOrSaber === true && ammo > 0) fireBeam();
     }
 
@@ -416,6 +409,7 @@
 
     controls.addEventListener("lock", () => {
       blocker?.classList.add("hidden");
+      controlsLocked = true;
     });
 
     addDocClickEvt();
@@ -425,6 +419,7 @@
     controls.addEventListener("unlock", () => {
       blocker?.classList.remove("hidden");
       addDocClickEvt();
+      controlsLocked = false;
     });
 
     window.addEventListener("resize", () => {
@@ -433,6 +428,7 @@
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       webglRenderer.setSize(newWidth, newHeight);
+      CSS3Drenderer.setSize(newWidth, newHeight);
     });
 
     window.addEventListener("mousemove", (event: MouseEvent) => {
@@ -539,6 +535,7 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
+            console.log(previousSelectedModel);
             if (previousSelectedModel.model) {
               const parentSceneId =
                 previousSelectedModel.model.parent?.parent?.parent?.parent
@@ -549,6 +546,7 @@
                   scene.remove(parentScene);
                   previousSelectedModel.deleted = true;
                   console.log("removed");
+                  killCounter++;
                 }
               }
               const sphere = new THREE.Mesh(geometry, fireMaterial);
@@ -562,7 +560,6 @@
               targetx = null;
               targety = null;
               targetz = null;
-              killCounter++;
               checkVictory();
             }
           }
@@ -736,13 +733,15 @@
 </script>
 
 <div class="flex justify-center items-center h-screen absolute inset-0">
-  <div class="bg-white w-48 h-48 fixed" id="blocker">
-    <h1>Click any where to start</h1>
+  <div class="fixed" id="blocker">
+    <h1 class="text-cyan-400 text-2xl underline">Click any where to start</h1>
   </div>
   <div class="bg-white w-48 h-48 fixed hidden" id="victory-screen">
     <h1>All Enemies have been defeated.</h1>
   </div>
-  <img src="crosshair.png" alt="crosshair" class="fixed" />
+  {#if controlsLocked === true}
+    <img src="crosshair.png" alt="crosshair" class="fixed" />
+  {/if}
 </div>
 
 <div
