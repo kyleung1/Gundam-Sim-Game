@@ -1,0 +1,11 @@
+Model Information:
+* title:	ガンダム（THE ORIGIN版)/Gundam(THE ORIGIN ver)
+* source:	https://sketchfab.com/3d-models/the-origingundamthe-origin-ver-b1fbcc97214a431bbc024f7bc929c41a
+* author:	みそ太郎 (https://sketchfab.com/nama_140)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "ガンダム（THE ORIGIN版)/Gundam(THE ORIGIN ver)" (https://sketchfab.com/3d-models/the-origingundamthe-origin-ver-b1fbcc97214a431bbc024f7bc929c41a) by みそ太郎 (https://sketchfab.com/nama_140) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

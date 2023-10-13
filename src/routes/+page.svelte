@@ -6,7 +6,14 @@
     CSS3DObject,
     CSS3DSprite,
   } from "three/examples/jsm/renderers/CSS3DRenderer.js";
+  //   import {
+  //     GLTFLoader,
+  //     type GLTF,
+  //   } from "three/examples/jsm/loaders/GLTFLoader.js";
+  import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+
   if (browser) {
+    let prevTime = performance.now();
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -59,14 +66,37 @@
     const playBtnObj = new CSS3DObject(playBtn);
     const sourceBtnObj = new CSS3DObject(sourceBtn);
     logoObj.position.set(0, 200, -500);
-    gamenameObj.position.set(0, 70, -300);
-    playBtnObj.position.set(0, 50, -500);
-    sourceBtnObj.position.set(0, -2, -500);
+    gamenameObj.position.set(0, 50, -300);
+    playBtnObj.position.set(0, 40, -500);
+    sourceBtnObj.position.set(0, 0, -500);
 
     scene.add(logoObj);
     scene.add(gamenameObj);
     scene.add(playBtnObj);
     scene.add(sourceBtnObj);
+
+    const fbxLoader = new FBXLoader();
+    const ambientLight = new THREE.AmbientLight(0xffffff);
+    scene.add(ambientLight);
+
+    let gundamModel: THREE.Group<THREE.Object3DEventMap>;
+    let mixer: THREE.AnimationMixer;
+    let action: THREE.AnimationAction;
+
+    fbxLoader.load("rx-78/test/source/model.fbx", (fbxScene) => {
+      gundamModel = fbxScene;
+      console.log(gundamModel);
+      mixer = new THREE.AnimationMixer(gundamModel);
+      const randomNum = Math.floor(Math.random() * 2) + 3;
+      console.log(randomNum);
+      action = mixer.clipAction(gundamModel.animations[randomNum]);
+      //   console.log(gundamModel.animations);
+      //   console.log(gundamModel.scene.animations);
+      action.play();
+      gundamModel.position.set(0, -100, -170);
+      //   gundamModel.scene.rotateX((3 * Math.PI) / 2);
+      scene.add(gundamModel);
+    });
 
     const spaceTexture = new THREE.CubeTextureLoader()
       .setPath("/textures/spaceMap/")
@@ -96,6 +126,12 @@
     function animate() {
       if (playClicked) optionSelected(playBtnObj);
       if (sourceClicked) optionSelected(sourceBtnObj);
+      if (mixer) {
+        const time = performance.now();
+        const delta = (time - prevTime) / 1000;
+        mixer.update(delta);
+        prevTime = time;
+      }
 
       webglRenderer.render(scene, camera);
       CSS3Drenderer.render(scene, camera);
