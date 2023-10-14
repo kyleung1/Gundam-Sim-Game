@@ -7,3 +7,5 @@
 - add more pages
 - attack animations
 - fix victory checker
+- highlight enemy
+- more animations in game

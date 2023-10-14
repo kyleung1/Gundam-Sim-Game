@@ -87,8 +87,6 @@
 
     // css3d popup when hovering an enemy
     const highlightDiv = document.createElement("div");
-    highlightDiv.innerHTML =
-      "<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Random text Random text Random text Random text Random text Random text</p></div>";
     const highlight = new CSS3DObject(highlightDiv);
     highlight.scale.set(0.03, 0.03, 0.03);
     const points1 = [
@@ -267,7 +265,12 @@
         if (selectedModel.name === "ENEMY_ZAKO_3_0") {
           selectedModel.updateMatrixWorld();
           worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
+          const dx = worldPosition.x - camera.position.x;
+          const dy = worldPosition.y - camera.position.y;
+          const dz = worldPosition.z - camera.position.z;
+          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
           highlight.position.set(5, 3, -15);
+          highlightDiv.innerHTML = `<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Enemy is ${distance} meters away.</p></div>`;
           bracket1.position.set(
             worldPosition.x,
             worldPosition.y,
