@@ -141,7 +141,7 @@
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
 
-    const enemies: THREE.Mesh[] = [];
+    const enemies: GLTF[] = [];
     interface GroupObject {
       [key: string]: THREE.Group<THREE.Object3DEventMap> | undefined;
     }
@@ -151,32 +151,87 @@
       glftLoader.load("zaku/scene.gltf", (gltfScene) => {
         zaku = gltfScene;
         zaku.scene.scale.set(1, 1, 1);
-        zaku.scene.position.x = Math.random() * 200 - 100;
-        zaku.scene.position.y = Math.random() * 200 - 100;
-        zaku.scene.position.z = Math.random() * 200 - 100;
+        zaku.scene.position.x = Math.random() * 300 - 150;
+        zaku.scene.position.y = Math.random() * 300 - 150;
+        zaku.scene.position.z = Math.random() * 300 - 150;
         parentScenes[gltfScene.scene.uuid] = gltfScene.scene;
         scene.add(gltfScene.scene);
-        gltfScene.scene.traverse((child) => {
-          if (child instanceof THREE.Mesh) enemies.push(child);
-        });
+        enemies.push(gltfScene);
+        // gltfScene.scene.traverse((child) => {
+        //   if (child instanceof THREE.Mesh) enemies.push(child);
+        // });
+      });
+    }
+
+    function addAsteroid() {
+      glftLoader.load("asteroid/scene.gltf", (gltfScene) => {
+        gltfScene.scene.scale.set(10, 10, 10);
+        gltfScene.scene.position.x = Math.random() * 300 - 150;
+        gltfScene.scene.position.y = Math.random() * 300 - 150;
+        gltfScene.scene.position.z = Math.random() * 300 - 150;
+        scene.add(gltfScene.scene);
+      });
+    }
+
+    const enemyBeams: beams[] = [];
+    function enemyShoot() {
+      const worldPosition = new THREE.Vector3();
+      enemies.forEach((zaku) => {
+        const random = Math.floor(Math.random() * 10);
+        if (random === 1) {
+          const zakuScene = zaku.scene;
+          zakuScene.updateMatrixWorld();
+          worldPosition.setFromMatrixPosition(zakuScene.matrixWorld);
+          const randomX = Math.floor(Math.random() * 10);
+          const randomY = Math.floor(Math.random() * 10);
+          const randomZ = Math.floor(Math.random() * 10);
+
+          const direction = new THREE.Vector3(
+            worldPosition.x - randomX,
+            worldPosition.y - randomY,
+            worldPosition.z - randomZ,
+          );
+
+          const enemyBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+          enemyBeam.position.set(
+            worldPosition.x,
+            worldPosition.y,
+            worldPosition.z,
+          );
+          scene.add(enemyBeam);
+          setTimeout(() => {
+            scene.remove(enemyBeam);
+            console.log("enemy beam removed");
+          }, 5000);
+          const enemyBeamObj = {
+            model: enemyBeam,
+            direction: direction,
+          };
+          enemyBeams.push(enemyBeamObj);
+        }
       });
     }
 
     function checkVictory() {
-      if (killCounter % 10 === 0) {
+      if (enemies.length === 0) {
         victoryScreen?.classList.remove("hidden");
         setTimeout(() => {
           victoryScreen?.classList.add("hidden");
-        }, 5000);
+        }, 3000);
       }
     }
 
     const beams: beams[] = [];
     function fireBeam() {
+      console.log(enemies);
       fire = true;
       ammo--;
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
       scene.add(beam);
+      setTimeout(() => {
+        scene.remove(beam);
+        console.log("removed");
+      }, 6000);
       beam.position.x = camera.position.x;
       beam.position.y = camera.position.y;
       beam.position.z = camera.position.z;
@@ -227,6 +282,13 @@
                       prevTargetCoords.splice(i, 1);
                       console.log("removed");
                       killCounter++;
+                      for (let i = 0; i < enemies.length; i++) {
+                        const enemyScene = enemies[i].scene.uuid;
+                        if (enemyScene === parentScene.uuid) {
+                          enemies.splice(i, 1);
+                        }
+                      }
+                      checkVictory();
                     }
                   }
                 }
@@ -245,13 +307,20 @@
                 targetx = null;
                 targety = null;
                 targetz = null;
-                // checkVictory();
               }
             }
           }
         }
       }
 
+      for (let i = 0; i < enemyBeams.length; i++) {
+        const currentBeam = enemyBeams[i];
+        if (currentBeam.model && currentBeam.direction) {
+          currentBeam.model?.position.sub(
+            currentBeam.direction.clone().multiplyScalar(0.01),
+          );
+        }
+      }
       // const gunbarrelposition = new THREE.Vector3(
       //   beamRifle.scene.position.x,
       //   beamRifle.scene.position.y,
@@ -298,17 +367,19 @@
     // Function to handle mouse click
     function onMouseClick(event: MouseEvent) {
       const worldPosition = new THREE.Vector3();
-
+      const clickedPosition = new THREE.Vector3();
+      raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
+      targetx = clickedPosition.x;
+      targety = clickedPosition.y;
+      targetz = clickedPosition.z;
       if (selectedModel) {
         selectedModel.updateMatrixWorld();
         worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
-        // Dash to the selected model
-        targetx = worldPosition.x;
-        targety = worldPosition.y;
-        targetz = worldPosition.z;
 
         if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+          targetx = worldPosition.x;
           targety = worldPosition.y + 5;
+          targetz = worldPosition.z;
 
           const targetObj = {
             x: targetx,
@@ -320,12 +391,6 @@
           if (rifleOrSaber === true && ammo > 0)
             prevTargetCoords.push(targetObj);
         }
-      } else {
-        const clickedPosition = new THREE.Vector3();
-        raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
-        targetx = clickedPosition.x;
-        targety = clickedPosition.y;
-        targetz = clickedPosition.z;
       }
 
       if (
@@ -448,11 +513,11 @@
 
     async function animate() {
       // animation function here animation function here animation function here animation function here animation function here animation function here
-      // highlight.position.set(
-      //   camera.position.x + 10,
-      //   camera.position.y + 10,
-      //   camera.position.z - 50,
-      // );
+
+      // enemyShoot();
+      if (!intervalID) {
+        intervalID = setInterval(enemyShoot, 3000);
+      }
 
       explosionList.forEach((explosion) => {
         explosion.rotation.x += 0.01;
@@ -465,8 +530,7 @@
       }
 
       for (let i = 0; i < enemies.length; i++) {
-        enemies[i].lookAt(camera.position);
-        enemies[i].rotateX((3 * Math.PI) / 2);
+        enemies[i].scene.lookAt(camera.position);
       }
 
       updateBeams();
@@ -538,7 +602,6 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
-            console.log(previousSelectedModel);
             if (previousSelectedModel.model) {
               const parentSceneId =
                 previousSelectedModel.model.parent?.parent?.parent?.parent
@@ -550,6 +613,13 @@
                   previousSelectedModel.deleted = true;
                   console.log("removed");
                   killCounter++;
+                  for (let i = 0; i < enemies.length; i++) {
+                    const enemyScene = enemies[i].scene.uuid;
+                    if (enemyScene === parentScene.uuid) {
+                      enemies.splice(i, 1);
+                    }
+                  }
+                  checkVictory();
                 }
               }
               const sphere = new THREE.Mesh(geometry, fireMaterial);
@@ -563,7 +633,6 @@
               targetx = null;
               targety = null;
               targetz = null;
-              // checkVictory();
             }
           }
         }
@@ -621,118 +690,14 @@
       addEnemy();
     }
 
+    for (let i = 0; i < 6; i++) {
+      addAsteroid();
+    }
+
+    let intervalID: any = null;
+
     animate();
   }
-
-  // interface current {
-  //   leftButton: boolean;
-  //   rightButton: boolean;
-  //   mouseX: number;
-  //   mouseY: number;
-  // }
-
-  // class InputController {
-  //   constructor() {
-  //     this.initialize();
-  //   }
-  //   public current = {
-  //     leftButton: false,
-  //     rightButton: false,
-  //     mouseX: 0,
-  //     mousey: 0,
-  //   };
-
-  //   public previous: null | current = null;
-  //   public keys: { [keyCode: number]: boolean } = {};
-  //   public previousKeys = {};
-
-  //   initialize() {
-  //     document.addEventListener(
-  //       "mousedown",
-  //       (e) => this.onMouseDown(e),
-  //       false,
-  //     );
-  //     document.addEventListener("mouseup", (e) => this.onMouseUp(e), false);
-  //     document.addEventListener(
-  //       "mousemove",
-  //       (e) => this.onMouseMove(e),
-  //       false,
-  //     );
-  //     document.addEventListener("keydown", (e) => this.onKeyDown(e), false);
-  //     document.addEventListener("keyup", (e) => this.onKeyUp(e), false);
-  //   }
-
-  //   onMouseDown(e: MouseEvent) {
-  //     switch (e.button) {
-  //       case 0: {
-  //         this.current.leftButton = true;
-  //         break;
-  //       }
-  //       case 2: {
-  //         this.current.rightButton = true;
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   onMouseUp(e: MouseEvent) {
-  //     switch (e.button) {
-  //       case 0: {
-  //         this.current.leftButton = false;
-  //         break;
-  //       }
-  //       case 2: {
-  //         this.current.rightButton = false;
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   onMouseMove(e: MouseEvent) {
-  //     this.current.mouseX = e.pageX - window.innerWidth / 2;
-  //     this.current.mousey = e.pageY - window.innerHeight / 2;
-
-  //     if (this.previous === null) {
-  //       this.previous = { ...this.current };
-  //     }
-
-  //     this.current.mouseXDelta = this.current.mouseX - this.previous.mouseX;
-  //     this.current.mouseYDelta = this.current.mouseY - this.previous.mouseY;
-  //   }
-  //   onKeyDown(e: KeyboardEvent) {
-  //     this.keys[e.keyCode] = true;
-  //   }
-  //   onKeyUp(e: KeyboardEvent) {
-  //     this.keys[e.keyCode] = false;
-  //   }
-
-  //   update() {}
-  // }
-
-  // class FirstPersonCamera {
-  //   camera: THREE.PerspectiveCamera;
-  //   input: InputController;
-  //   rotation: THREE.Quaternion;
-  //   translation: THREE.Vector3;
-  //   phi: number;
-  //   theta: number;
-  //   constructor(camera: THREE.PerspectiveCamera) {
-  //     this.camera = camera;
-  //     this.input = new InputController();
-  //     this.rotation = new THREE.Quaternion();
-  //     this.translation = new THREE.Vector3();
-  //     this.phi = 0;
-  //     this.theta = 0;
-  //   }
-
-  //   update(timeElapsedS: number) {
-  //     this.updateRotation(timeElapsedS);
-  //   }
-
-  //   updateRotation(timeElapsedS: number) {
-  //     const xh = this.input.current.mouseX;
-  //   }
-  // }
-
-  // const fpsCamera = new FirstPersonCamera(camera);
 </script>
 
 <div class="flex justify-center items-center h-screen absolute inset-0">
@@ -748,7 +713,7 @@
 </div>
 
 <div
-  class="border-4 border-blue-400 w-56 h-48 fixed text-neutral-400 my-16 mx-16"
+  class="border-4 border-blue-400 w-56 fixed text-neutral-400 my-16 mx-16 opening-line open"
   id="gui"
 >
   <div class="border-4 border-cyan-400 h-full">

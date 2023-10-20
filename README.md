@@ -6,6 +6,5 @@
 - fix cylinder beams
 - add more pages
 - attack animations
-- fix victory checker
-- highlight enemy
 - more animations in game
+- fix beam directions
