@@ -3,8 +3,7 @@
 ## Things to work on:
 
 - ui
-- fix cylinder beams
+- center beam starting to rifle barrel
 - add more pages
 - attack animations
 - more animations in game
-- fix beam directions

@@ -177,7 +177,7 @@
     function enemyShoot() {
       const worldPosition = new THREE.Vector3();
       enemies.forEach((zaku) => {
-        const random = Math.floor(Math.random() * 10);
+        const random = Math.floor(Math.random() * 4);
         if (random === 1) {
           const zakuScene = zaku.scene;
           zakuScene.updateMatrixWorld();
@@ -186,22 +186,24 @@
           const randomY = Math.floor(Math.random() * 10);
           const randomZ = Math.floor(Math.random() * 10);
 
-          const direction = new THREE.Vector3(
-            worldPosition.x - randomX,
-            worldPosition.y - randomY,
-            worldPosition.z - randomZ,
+          const direction = new THREE.Vector3();
+          direction.subVectors(
+            new THREE.Vector3(randomX, randomY, randomZ),
+            worldPosition,
           );
+          direction.normalize();
 
           const enemyBeam = new THREE.Mesh(beamGeometry, beamMaterial);
           enemyBeam.position.set(
             worldPosition.x,
-            worldPosition.y,
+            worldPosition.y + 5,
             worldPosition.z,
           );
+          enemyBeam.lookAt(direction);
+          enemyBeam.rotateX((3 * Math.PI) / 2);
           scene.add(enemyBeam);
           setTimeout(() => {
             scene.remove(enemyBeam);
-            console.log("enemy beam removed");
           }, 5000);
           const enemyBeamObj = {
             model: enemyBeam,
@@ -223,27 +225,40 @@
 
     const beams: beams[] = [];
     function fireBeam() {
-      console.log(enemies);
+      console.log(beamRifle);
       fire = true;
       ammo--;
-      const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-      scene.add(beam);
-      setTimeout(() => {
-        scene.remove(beam);
-        console.log("removed");
-      }, 6000);
-      beam.position.x = camera.position.x;
-      beam.position.y = camera.position.y;
-      beam.position.z = camera.position.z;
-      const cameraPosition = camera.position.clone();
+      const cameraPosition = camera.position;
+      const rifleBarrel = new THREE.Vector3();
+
+      beamRifle.scene.getWorldPosition(rifleBarrel);
+      camera.worldToLocal(rifleBarrel);
+      console.log("Tip position relative to camera:", rifleBarrel);
 
       if (targetx && targety && targetz) {
-        const newDirection = new THREE.Vector3(
-          targetx - cameraPosition.x,
-          targety - cameraPosition.y,
-          targetz - cameraPosition.z,
+        const clickedPosition = new THREE.Vector3();
+        raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
+        rifleBarrel.set(
+          camera.position.x,
+          camera.position.y - 1,
+          camera.position.z,
+        );
+        const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+        beam.position.copy(rifleBarrel);
+
+        const newDirection = new THREE.Vector3(targetx, targety, targetz).sub(
+          rifleBarrel,
         );
         newDirection.normalize();
+
+        beam.lookAt(clickedPosition);
+        beam.rotateX((3 * Math.PI) / 2);
+
+        scene.add(beam);
+        setTimeout(() => {
+          scene.remove(beam);
+          console.log("beam removed");
+        }, 6000);
         const beamObj = {
           model: beam,
           direction: newDirection,
@@ -317,7 +332,7 @@
         const currentBeam = enemyBeams[i];
         if (currentBeam.model && currentBeam.direction) {
           currentBeam.model?.position.sub(
-            currentBeam.direction.clone().multiplyScalar(0.01),
+            currentBeam.direction.clone().multiplyScalar(beamSpeed),
           );
         }
       }
@@ -514,7 +529,6 @@
     async function animate() {
       // animation function here animation function here animation function here animation function here animation function here animation function here
 
-      // enemyShoot();
       if (!intervalID) {
         intervalID = setInterval(enemyShoot, 3000);
       }
@@ -523,11 +537,6 @@
         explosion.rotation.x += 0.01;
         explosion.rotation.y += 0.01;
       });
-
-      for (let i = 0; i < beams.length; i++) {
-        beams[i].model?.lookAt(camera.position);
-        beams[i].model?.rotateX((3 * Math.PI) / 2);
-      }
 
       for (let i = 0; i < enemies.length; i++) {
         enemies[i].scene.lookAt(camera.position);
