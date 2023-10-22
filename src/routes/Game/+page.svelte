@@ -39,7 +39,7 @@
   if (browser) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      75,
+      100,
       window.innerWidth / window.innerHeight / 2,
       0.1,
       1000,
@@ -125,18 +125,13 @@
     glftLoader.load("lightsaber/scene.gltf", (gltfScene) => {
       beamSaberModel = gltfScene;
       beamSaberModel.scene.scale.set(0.05, 0.05, 0.05);
-      beamSaberModel.scene.rotation.x -= 0;
-      beamSaberModel.scene.rotation.y += 0.9;
-      beamSaberModel.scene.rotation.z -= 0.0;
-      camera.add(gltfScene.scene);
+      // beamSaberModel.scene.position.set(2, 0, 0);
+      scene.add(gltfScene.scene);
     });
     let beamRifle: GLTF;
     glftLoader.load("rifle/scene.gltf", (gltfScene) => {
       beamRifle = gltfScene;
-      beamRifle.scene.rotation.x += 0.5;
-      beamRifle.scene.rotation.y += 0.5;
-      beamRifle.scene.rotation.z += 0.3;
-      camera.add(gltfScene.scene);
+      // scene.add(gltfScene.scene);
     });
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
@@ -239,9 +234,9 @@
         const clickedPosition = new THREE.Vector3();
         raycaster.ray.at(2000, clickedPosition); // Change 20 to your desired distance
         rifleBarrel.set(
-          camera.position.x,
-          camera.position.y - 1,
-          camera.position.z,
+          beamRifle.scene.position.x,
+          beamRifle.scene.position.y + 1.5,
+          beamRifle.scene.position.z,
         );
         const beam = new THREE.Mesh(beamGeometry, beamMaterial);
         beam.position.copy(rifleBarrel);
@@ -478,6 +473,14 @@
 
     function toggleWeapon() {
       rifleOrSaber = !rifleOrSaber;
+      if (rifleOrSaber) {
+        scene.remove(beamSaberModel.scene);
+        scene.add(beamRifle.scene);
+      } else {
+        scene.remove(beamRifle.scene);
+        scene.add(beamSaberModel.scene);
+        console.log(rifleOrSaber);
+      }
     }
 
     function addDocClickEvt() {
@@ -568,27 +571,6 @@
         selectedModel = null;
       }
 
-      if (beamRifle && beamSaberModel && rifleOrSaber === true) {
-        beamRifle.scene.position.x = 1.8;
-        beamRifle.scene.position.y = -2.3;
-        beamRifle.scene.position.z = -1;
-
-        beamSaberModel.scene.position.x = 0.3;
-        beamSaberModel.scene.position.y = -0.7;
-        beamSaberModel.scene.position.z = 1;
-      } else if (beamRifle && beamSaberModel && rifleOrSaber === false) {
-        beamSaberModel.scene.position.x = 0.3;
-        beamSaberModel.scene.position.y = -0.7;
-        beamSaberModel.scene.position.z = -1;
-
-        beamRifle.scene.position.x = 1.8;
-        beamRifle.scene.position.y = -2.3;
-        beamRifle.scene.position.z = 1;
-      }
-
-      if (beamRifle && rifleOrSaber === true) {
-      }
-
       if (moving) {
         const cameraPosition = camera.position;
 
@@ -670,6 +652,31 @@
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
         controls.getObject().position.y -= velocity.y * delta;
+      }
+
+      if (beamRifle && beamSaberModel) {
+        if (rifleOrSaber) {
+          // Define an offset vector for the weapon
+          const offset = new THREE.Vector3(0.8, -1.9, -1); // Adjust these values as needed
+
+          // Apply the camera's rotation to the offset
+          offset.applyEuler(camera.rotation);
+          const cameraPosition = camera.position.clone();
+          const weaponPosition = cameraPosition.clone().add(offset);
+
+          beamRifle.scene.rotation.copy(camera.rotation);
+          beamRifle.scene.position.copy(weaponPosition);
+        } else {
+          // Define an offset vector for the weapon
+          const offset = new THREE.Vector3(0.5, -0.5, -1); // Adjust these values as needed
+
+          // Apply the camera's rotation to the offset
+          offset.applyEuler(camera.rotation);
+          const cameraPosition = camera.position.clone();
+          const weaponPosition = cameraPosition.clone().add(offset);
+          beamSaberModel.scene.rotation.copy(camera.rotation);
+          beamSaberModel.scene.position.copy(weaponPosition);
+        }
       }
 
       prevTime = time;
