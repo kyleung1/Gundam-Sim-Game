@@ -593,6 +593,9 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
+            beamSaberModel.scene.rotation.x += 100;
+            beamSaberModel.scene.rotation.y += 100;
+
             if (previousSelectedModel.model) {
               const parentSceneId =
                 previousSelectedModel.model.parent?.parent?.parent?.parent

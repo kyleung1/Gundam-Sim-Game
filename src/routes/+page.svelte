@@ -16,7 +16,7 @@
     let prevTime = performance.now();
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      75,
+      100,
       window.innerWidth / window.innerHeight / 2,
       0.1,
       1000,
@@ -41,7 +41,7 @@
 
     const playBtn = document.createElement("button");
     let playClicked = false;
-    playBtn.classList.add("text-cyan-400");
+    playBtn.classList.add("menu-buttons");
     playBtn.innerText = "Play";
     playBtn.addEventListener("click", () => {
       playClicked = !playClicked;
@@ -50,30 +50,59 @@
       }, 700);
     });
 
-    const sourceBtn = document.createElement("button");
-    let sourceClicked = false;
-    sourceBtn.classList.add("text-cyan-400");
-    sourceBtn.innerText = "Sources";
-    sourceBtn.addEventListener("click", () => {
-      sourceClicked = !sourceClicked;
+    const controlsBtn = document.createElement("button");
+    let controlsClicked = false;
+    controlsBtn.classList.add("menu-buttons");
+    controlsBtn.innerText = "Controls";
+    controlsBtn.addEventListener("click", () => {
+      controlsClicked = !controlsClicked;
       setTimeout(() => {
-        window.location.href = "/Sources";
+        window.location.href = "/Controls";
+      }, 700);
+    });
+
+    const creditBtn = document.createElement("button");
+    let creditsClicked = false;
+    creditBtn.classList.add("menu-buttons");
+    creditBtn.innerText = "Credits";
+    creditBtn.addEventListener("click", () => {
+      creditsClicked = !creditsClicked;
+      setTimeout(() => {
+        window.location.href = "/Credits";
+      }, 700);
+    });
+
+    const aboutBtn = document.createElement("button");
+    let aboutClicked = false;
+    aboutBtn.classList.add("menu-buttons");
+    aboutBtn.innerText = "About";
+    aboutBtn.addEventListener("click", () => {
+      aboutClicked = !aboutClicked;
+      setTimeout(() => {
+        window.location.href = "/About";
       }, 700);
     });
 
     const logoObj = new CSS3DObject(logo);
     const gamenameObj = new CSS3DObject(gamename);
     const playBtnObj = new CSS3DObject(playBtn);
-    const sourceBtnObj = new CSS3DObject(sourceBtn);
-    logoObj.position.set(0, 200, -500);
-    gamenameObj.position.set(0, 50, -300);
-    playBtnObj.position.set(0, 40, -500);
-    sourceBtnObj.position.set(0, 0, -500);
+    const controlsBtnObj = new CSS3DObject(controlsBtn);
+    const creditBtnObj = new CSS3DObject(creditBtn);
+    const aboutBtnObj = new CSS3DObject(aboutBtn);
+    logoObj.position.set(0, 200, -300);
+    gamenameObj.scale.set(1.5, 1.5, 1.5);
+    gamenameObj.position.set(0, 75, -300);
+    playBtnObj.position.set(0, 25, -300);
+    controlsBtnObj.position.set(0, -25, -300);
+    creditBtnObj.position.set(0, -75, -300);
+    aboutBtnObj.position.set(0, -125, -300);
 
     scene.add(logoObj);
     scene.add(gamenameObj);
     scene.add(playBtnObj);
-    scene.add(sourceBtnObj);
+    scene.add(controlsBtnObj);
+    scene.add(creditBtnObj);
+    scene.add(aboutBtnObj);
 
     const fbxLoader = new FBXLoader();
     const ambientLight = new THREE.AmbientLight(0xffffff);
@@ -85,16 +114,11 @@
 
     fbxLoader.load("rx-78/test/source/model.fbx", (fbxScene) => {
       gundamModel = fbxScene;
-      console.log(gundamModel);
       mixer = new THREE.AnimationMixer(gundamModel);
       const randomNum = Math.floor(Math.random() * 2) + 3;
-      console.log(randomNum);
       action = mixer.clipAction(gundamModel.animations[randomNum]);
-      //   console.log(gundamModel.animations);
-      //   console.log(gundamModel.scene.animations);
       action.play();
-      gundamModel.position.set(0, -100, -170);
-      //   gundamModel.scene.rotateX((3 * Math.PI) / 2);
+      gundamModel.position.set(0, -100, -155);
       scene.add(gundamModel);
     });
 
@@ -119,13 +143,26 @@
       CSS3Drenderer.setSize(newWidth, newHeight);
     });
 
+    let oldx = 0;
+    let oldy = 0;
+    window.onmousemove = function (event) {
+      let changeX = event.x - oldx;
+      let changeY = event.y - oldy;
+      camera.position.x += changeX / 100;
+      camera.position.y -= changeY / 100;
+      oldx = event.x;
+      oldy = event.y;
+    };
+
     function optionSelected(button: CSS3DObject) {
-      button.position.x += 8;
+      button.position.x += 10;
     }
 
     function animate() {
       if (playClicked) optionSelected(playBtnObj);
-      if (sourceClicked) optionSelected(sourceBtnObj);
+      if (controlsClicked) optionSelected(controlsBtnObj);
+      if (creditsClicked) optionSelected(creditBtnObj);
+      if (aboutClicked) optionSelected(aboutBtnObj);
       if (mixer) {
         const time = performance.now();
         const delta = (time - prevTime) / 1000;

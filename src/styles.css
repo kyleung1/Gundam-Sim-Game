@@ -8,6 +8,26 @@
   transition: height 0.5s ease-in-out;
 }
 
+.opening-line.open {
+  animation: openLine 0.5s forwards;
+}
+
+.menu-buttons {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  width: 25%;
+  color: cyan;
+}
+
+.menu-buttons:hover {
+  /* background-color: white; */
+  /* border-left: solid skyblue 1px; */
+  border-top: solid skyblue 1px;
+  border-bottom: solid skyblue 1px;
+}
+
 @keyframes openLine {
   from {
     height: 0;
@@ -15,8 +35,4 @@
   to {
     height: 200px; /* Adjust the height as needed */
   }
-}
-
-.opening-line.open {
-  animation: openLine 0.5s forwards;
 }
