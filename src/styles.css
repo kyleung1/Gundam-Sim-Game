@@ -4,7 +4,7 @@
 
 .opening-line {
   height: 0;
-  border-top: 4px solid #60a5fa;
+  /* border-top: 4px solid #60a5fa; */
   transition: height 0.5s ease-in-out;
 }
 

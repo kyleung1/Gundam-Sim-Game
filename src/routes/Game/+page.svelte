@@ -74,6 +74,7 @@
     };
     let prevTargetCoords: targetCoords[] = []; // only needed to keep track of targets for the beams
     let moving: boolean = false;
+    let meleeAnimation: boolean = false;
     let fire: boolean = false;
 
     // target position for mouse
@@ -124,9 +125,9 @@
     let beamSaberModel: GLTF;
     glftLoader.load("lightsaber/scene.gltf", (gltfScene) => {
       beamSaberModel = gltfScene;
-      beamSaberModel.scene.scale.set(0.05, 0.05, 0.05);
+      beamSaberModel.scene.scale.set(0.05, 0.15, 0.05);
       // beamSaberModel.scene.position.set(2, 0, 0);
-      scene.add(gltfScene.scene);
+      camera.add(gltfScene.scene);
     });
     let beamRifle: GLTF;
     glftLoader.load("rifle/scene.gltf", (gltfScene) => {
@@ -220,15 +221,10 @@
 
     const beams: beams[] = [];
     function fireBeam() {
-      console.log(beamRifle);
       fire = true;
       ammo--;
       const cameraPosition = camera.position;
       const rifleBarrel = new THREE.Vector3();
-
-      beamRifle.scene.getWorldPosition(rifleBarrel);
-      camera.worldToLocal(rifleBarrel);
-      console.log("Tip position relative to camera:", rifleBarrel);
 
       if (targetx && targety && targetz) {
         const clickedPosition = new THREE.Vector3();
@@ -474,12 +470,11 @@
     function toggleWeapon() {
       rifleOrSaber = !rifleOrSaber;
       if (rifleOrSaber) {
-        scene.remove(beamSaberModel.scene);
+        camera.remove(beamSaberModel.scene);
         scene.add(beamRifle.scene);
       } else {
         scene.remove(beamRifle.scene);
-        scene.add(beamSaberModel.scene);
-        console.log(rifleOrSaber);
+        camera.add(beamSaberModel.scene);
       }
     }
 
@@ -593,41 +588,43 @@
             ) < 7
           ) {
             moving = false; // Stop moving once we're close enough
-            beamSaberModel.scene.rotation.x += 100;
-            beamSaberModel.scene.rotation.y += 100;
-
-            if (previousSelectedModel.model) {
-              const parentSceneId =
-                previousSelectedModel.model.parent?.parent?.parent?.parent
-                  ?.uuid;
-              if (parentSceneId !== undefined) {
-                const parentScene = parentScenes[parentSceneId];
-                if (parentScene) {
-                  scene.remove(parentScene);
-                  previousSelectedModel.deleted = true;
-                  console.log("removed");
-                  killCounter++;
-                  for (let i = 0; i < enemies.length; i++) {
-                    const enemyScene = enemies[i].scene.uuid;
-                    if (enemyScene === parentScene.uuid) {
-                      enemies.splice(i, 1);
+            meleeAnimation = true;
+            setTimeout(() => {
+              meleeAnimation = false;
+              if (previousSelectedModel.model) {
+                const parentSceneId =
+                  previousSelectedModel.model.parent?.parent?.parent?.parent
+                    ?.uuid;
+                if (parentSceneId !== undefined) {
+                  const parentScene = parentScenes[parentSceneId];
+                  if (parentScene) {
+                    scene.remove(parentScene);
+                    previousSelectedModel.deleted = true;
+                    console.log("removed");
+                    killCounter++;
+                    for (let i = 0; i < enemies.length; i++) {
+                      const enemyScene = enemies[i].scene.uuid;
+                      if (enemyScene === parentScene.uuid) {
+                        enemies.splice(i, 1);
+                      }
                     }
+                    checkVictory();
                   }
-                  checkVictory();
                 }
+                const sphere = new THREE.Mesh(geometry, fireMaterial);
+                sphere.scale.set(5.5, 5.5, 5.5);
+                if (targetx && targety && targetz)
+                  sphere.position.set(targetx, targety, targetz);
+                explosionList.push(sphere);
+                scene.add(sphere);
+                setTimeout(() => {
+                  scene.remove(sphere);
+                }, 2000);
+                targetx = null;
+                targety = null;
+                targetz = null;
               }
-              const sphere = new THREE.Mesh(geometry, fireMaterial);
-              sphere.scale.set(5.5, 5.5, 5.5);
-              sphere.position.set(targetx, targety, targetz);
-              explosionList.push(sphere);
-              scene.add(sphere);
-              setTimeout(() => {
-                scene.remove(sphere);
-              }, 2000);
-              targetx = null;
-              targety = null;
-              targetz = null;
-            }
+            }, 500);
           }
         }
       }
@@ -670,15 +667,14 @@
           beamRifle.scene.rotation.copy(camera.rotation);
           beamRifle.scene.position.copy(weaponPosition);
         } else {
-          // Define an offset vector for the weapon
-          const offset = new THREE.Vector3(0.5, -0.5, -1); // Adjust these values as needed
-
-          // Apply the camera's rotation to the offset
-          offset.applyEuler(camera.rotation);
-          const cameraPosition = camera.position.clone();
-          const weaponPosition = cameraPosition.clone().add(offset);
-          beamSaberModel.scene.rotation.copy(camera.rotation);
-          beamSaberModel.scene.position.copy(weaponPosition);
+          if (meleeAnimation === false) {
+            beamSaberModel.scene.rotation.x = 0;
+            beamSaberModel.scene.rotation.y = 0;
+          } else {
+            beamSaberModel.scene.rotation.x -= 0.03;
+            beamSaberModel.scene.rotation.y -= 0.01;
+          }
+          beamSaberModel.scene.position.set(0.3, -0.5, -1);
         }
       }
 
@@ -723,9 +719,6 @@
   <div class="fixed" id="blocker">
     <h1 class="text-cyan-400 text-2xl underline">Click any where to start</h1>
   </div>
-  <div class="bg-white w-48 h-48 fixed hidden" id="victory-screen">
-    <h1>All Enemies have been defeated.</h1>
-  </div>
   {#if controlsLocked === true}
     <img src="crosshair.png" alt="crosshair" class="fixed" />
   {/if}
@@ -733,7 +726,6 @@
 
 <div
   class="border-4 border-blue-400 w-56 fixed text-neutral-400 my-16 mx-16 opening-line open"
-  id="gui"
 >
   <div class="border-4 border-cyan-400 h-full">
     <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
@@ -750,6 +742,17 @@
 
         <span>Enemies Remaining: {15 - killCounter}</span>
       </p>
+    </div>
+  </div>
+</div>
+
+<div
+  class="border-4 border-blue-400 w-56 fixed text-neutral-400 my-16 mx-16 items-end opening-line open hidden"
+  id="victory-screen"
+>
+  <div class="border-4 border-cyan-400 h-full">
+    <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
+      <h1>All Enemies have been defeated.</h1>
     </div>
   </div>
 </div>

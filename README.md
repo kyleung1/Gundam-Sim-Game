@@ -13,5 +13,5 @@ As a Gundam fan, this first person simulation game was made as a passion project
 ## Things to work on:
 
 - ui
-- attack animations
-- more animations in game
+- credits page
+- boss battle?
