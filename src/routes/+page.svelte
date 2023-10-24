@@ -37,7 +37,7 @@
 
     const gamename = document.createElement("h1");
     gamename.innerText = "Simulation Game";
-    gamename.classList.add("text-cyan-400");
+    gamename.classList.add("text-cyan-400", "font-mono", "font-semibold");
 
     const playBtn = document.createElement("button");
     let playClicked = false;

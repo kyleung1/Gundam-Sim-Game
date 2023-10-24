@@ -214,8 +214,12 @@
       if (enemies.length === 0) {
         victoryScreen?.classList.remove("hidden");
         setTimeout(() => {
-          victoryScreen?.classList.add("hidden");
-        }, 3000);
+          victoryScreen?.classList.remove("open");
+          victoryScreen?.classList.add("close");
+          setTimeout(() => {
+            victoryScreen?.classList.add("hidden");
+          }, 500);
+        }, 8000);
       }
     }
 
@@ -717,7 +721,9 @@
 
 <div class="flex justify-center items-center h-screen absolute inset-0">
   <div class="fixed" id="blocker">
-    <h1 class="text-cyan-400 text-2xl underline">Click any where to start</h1>
+    <h1 class="text-cyan-400 text-2xl underline font-mono font-semiboldbold">
+      CLICK ANYWHERE TO START
+    </h1>
   </div>
   {#if controlsLocked === true}
     <img src="crosshair.png" alt="crosshair" class="fixed" />
@@ -729,30 +735,32 @@
 >
   <div class="border-4 border-cyan-400 h-full">
     <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
-      <p class="text-xl flex flex-col p-0">
-        Weapon Equipped: {#if rifleOrSaber}
+      <p class="text-xl flex flex-col p-2 font-mono font-semiboldbold">
+        WEAPON EQUIPPED: {#if rifleOrSaber}
           <div class="flex flex-col">
-            <span>Beam Rifle</span>
-            <span class="">Ammo: {ammo}/16</span>
+            <span>BEAM RIFLE</span>
+            <span class="">AMMO: {ammo}/16</span>
           </div>
         {/if}
         {#if !rifleOrSaber}
-          <span>Beam Saber</span>
+          <span>BEAM SABER</span>
         {/if}
 
-        <span>Enemies Remaining: {15 - killCounter}</span>
+        <span>ENEMIES REMAINING: {15 - killCounter}</span>
       </p>
     </div>
   </div>
 </div>
 
 <div
-  class="border-4 border-blue-400 w-56 fixed text-neutral-400 my-16 mx-16 items-end opening-line open hidden"
+  class="border-4 border-blue-400 w-56 fixed text-neutral-400 my-16 mx-16 items-end right-0 opening-line open hidden"
   id="victory-screen"
 >
   <div class="border-4 border-cyan-400 h-full">
     <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
-      <h1>All Enemies have been defeated.</h1>
+      <h1 class="text-xl p-2 font-mono font-semiboldbold">
+        ALL ENEMIES HAVE BEEN DEFEATED.
+      </h1>
     </div>
   </div>
 </div>

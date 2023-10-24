@@ -4,7 +4,9 @@
   }
 </script>
 
-<div class="bg-neutral-700 h-screen flex flex-col items-center text-cyan-400">
+<div
+  class="bg-neutral-700 h-screen flex flex-col items-center text-cyan-400 font-mono font-semibold"
+>
   <img src="logo.png" alt="logo" class="w-1/5 mt-10" />
   <h1 class="text-3xl">Simulation Game</h1>
   <div class="my-10 bg-white">

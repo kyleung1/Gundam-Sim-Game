@@ -12,6 +12,10 @@
   animation: openLine 0.5s forwards;
 }
 
+.opening-line.close {
+  animation: closeLine 0.5s forwards;
+}
+
 .menu-buttons {
   padding-top: 5px;
   padding-bottom: 5px;
@@ -19,6 +23,8 @@
   padding-right: 5px;
   width: 25%;
   color: cyan;
+  font-family: monospace;
+  font-weight: bold;
 }
 
 .menu-buttons:hover {
@@ -34,5 +40,14 @@
   }
   to {
     height: 200px; /* Adjust the height as needed */
+  }
+}
+
+@keyframes closeLine {
+  from {
+    height: 200px;
+  }
+  to {
+    height: 0px; /* Adjust the height as needed */
   }
 }
