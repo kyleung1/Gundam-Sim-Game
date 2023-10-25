@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low-Poly MS Gundam MS-06S Char's Zaku II
+* source:	https://sketchfab.com/3d-models/low-poly-ms-gundam-ms-06s-chars-zaku-ii-ddb4574a9eb14b55b6cb52f5ae77f279
+* author:	tipatat (https://sketchfab.com/tipatat)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low-Poly MS Gundam MS-06S Char's Zaku II" (https://sketchfab.com/3d-models/low-poly-ms-gundam-ms-06s-chars-zaku-ii-ddb4574a9eb14b55b6cb52f5ae77f279) by tipatat (https://sketchfab.com/tipatat) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

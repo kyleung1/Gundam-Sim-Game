@@ -16,6 +16,14 @@
   animation: closeLine 0.5s forwards;
 }
 
+.opening-line.openLonger {
+  animation: openLineLonger 0.5s forwards;
+}
+
+.opening-line.closeLonger {
+  animation: closeLineLonger 0.5s forwards;
+}
+
 .menu-buttons {
   padding-top: 5px;
   padding-bottom: 5px;
@@ -46,6 +54,24 @@
 @keyframes closeLine {
   from {
     height: 200px;
+  }
+  to {
+    height: 0px; /* Adjust the height as needed */
+  }
+}
+
+@keyframes openLineLonger {
+  from {
+    height: 0;
+  }
+  to {
+    height: 350px; /* Adjust the height as needed */
+  }
+}
+
+@keyframes closeLineLonger {
+  from {
+    height: 350px;
   }
   to {
     height: 0px; /* Adjust the height as needed */

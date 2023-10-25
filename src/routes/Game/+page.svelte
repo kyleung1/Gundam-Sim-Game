@@ -85,6 +85,8 @@
     const controls = new PointerLockControls(camera, document.body);
     const blocker = document.getElementById("blocker");
     const victoryScreen = document.getElementById("victory-screen");
+    const bossScreen = document.getElementById("boss-battle");
+    const bossDialogue = document.getElementById("boss-dialogue");
 
     // css3d popup when hovering an enemy
     const highlightDiv = document.createElement("div");
@@ -136,6 +138,7 @@
     });
     const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
     const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xde73ff });
+    const enemyBeamMaterial = new THREE.MeshBasicMaterial({ color: 0xffea00 });
 
     const enemies: GLTF[] = [];
     interface GroupObject {
@@ -162,9 +165,9 @@
     function addAsteroid() {
       glftLoader.load("asteroid/scene.gltf", (gltfScene) => {
         gltfScene.scene.scale.set(10, 10, 10);
-        gltfScene.scene.position.x = Math.random() * 300 - 150;
-        gltfScene.scene.position.y = Math.random() * 300 - 150;
-        gltfScene.scene.position.z = Math.random() * 300 - 150;
+        gltfScene.scene.position.x = Math.random() * 150 - 75;
+        gltfScene.scene.position.y = Math.random() * 150 - 75;
+        gltfScene.scene.position.z = Math.random() * 150 - 75;
         scene.add(gltfScene.scene);
       });
     }
@@ -178,9 +181,9 @@
           const zakuScene = zaku.scene;
           zakuScene.updateMatrixWorld();
           worldPosition.setFromMatrixPosition(zakuScene.matrixWorld);
-          const randomX = Math.floor(Math.random() * 10);
-          const randomY = Math.floor(Math.random() * 10);
-          const randomZ = Math.floor(Math.random() * 10);
+          const randomX = Math.floor(Math.random() * 10) - 5;
+          const randomY = Math.floor(Math.random() * 10) - 5;
+          const randomZ = Math.floor(Math.random() * 10) - 5;
 
           const direction = new THREE.Vector3();
           direction.subVectors(
@@ -189,7 +192,7 @@
           );
           direction.normalize();
 
-          const enemyBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+          const enemyBeam = new THREE.Mesh(beamGeometry, enemyBeamMaterial);
           enemyBeam.position.set(
             worldPosition.x,
             worldPosition.y + 5,
@@ -210,12 +213,72 @@
       });
     }
 
+    let bossDirection: THREE.Vector3;
+    let bossMoving: boolean = false;
+    function bossAction() {
+      if (boss && boss.scene) {
+        bossMoving = true;
+        const worldPosition = new THREE.Vector3();
+        let newBossDirection = new THREE.Vector3();
+        const bossScene = boss.scene;
+        bossScene.updateMatrixWorld();
+        worldPosition.setFromMatrixPosition(bossScene.matrixWorld);
+        const randomX = Math.floor(Math.random() * 20) - 10;
+        const randomY = Math.floor(Math.random() * 20) - 10;
+        const randomZ = Math.floor(Math.random() * 20) - 10;
+
+        if (
+          worldPosition.distanceTo(
+            new THREE.Vector3(
+              camera.position.x,
+              camera.position.y,
+              camera.position.z,
+            ),
+          ) > 200
+        ) {
+          newBossDirection.subVectors(worldPosition, camera.position);
+        } else {
+          newBossDirection.set(randomX, randomY, randomZ);
+        }
+
+        newBossDirection.normalize();
+        bossDirection = newBossDirection;
+      }
+    }
+
+    let boss: GLTF;
+    let bossID: number;
     function checkVictory() {
       if (enemies.length === 0) {
+        bossScreen?.classList.remove("hidden");
+        setTimeout(() => {
+          bossScreen?.classList.remove("openLonger");
+          bossScreen?.classList.add("closeLonger");
+          bossDialogue?.classList.add("hidden");
+          setTimeout(() => {
+            bossScreen?.classList.add("hidden");
+            glftLoader.load("char-zaku/scene.glb", (gltfScene) => {
+              boss = gltfScene;
+              bossID = gltfScene.scene.id;
+              gltfScene.scene.scale.set(4, 4, 4);
+              gltfScene.scene.position.x = Math.random() * 300 - 150;
+              gltfScene.scene.position.y = Math.random() * 300 - 150;
+              gltfScene.scene.position.z = Math.random() * 300 - 150;
+              parentScenes[gltfScene.scene.uuid] = gltfScene.scene;
+              scene.add(gltfScene.scene);
+            });
+          }, 500);
+        }, 7000);
+      }
+    }
+
+    function checkVictory2() {
+      if (!scene.getObjectById(bossID)) {
         victoryScreen?.classList.remove("hidden");
         setTimeout(() => {
           victoryScreen?.classList.remove("open");
           victoryScreen?.classList.add("close");
+          victoryScreen?.classList.add("hidden");
           setTimeout(() => {
             victoryScreen?.classList.add("hidden");
           }, 500);
@@ -252,7 +315,6 @@
         scene.add(beam);
         setTimeout(() => {
           scene.remove(beam);
-          console.log("beam removed");
         }, 6000);
         const beamObj = {
           model: beam,
@@ -283,6 +345,7 @@
                 ) < 1
               ) {
                 if (currentCoord.model) {
+                  // This if statement is to check for zakus
                   const parentSceneId =
                     currentCoord.model.parent?.parent?.parent?.parent?.uuid;
                   if (parentSceneId !== undefined) {
@@ -290,9 +353,9 @@
                     if (parentScene) {
                       scene.remove(parentScene);
                       prevTargetCoords.splice(i, 1);
-                      console.log("removed");
                       killCounter++;
                       for (let i = 0; i < enemies.length; i++) {
+                        // Removes zaku from enemies array
                         const enemyScene = enemies[i].scene.uuid;
                         if (enemyScene === parentScene.uuid) {
                           enemies.splice(i, 1);
@@ -301,7 +364,12 @@
                       checkVictory();
                     }
                   }
+                  if (currentCoord.model.name !== "ENEMY_ZAKO_3_0") {
+                    scene.remove(boss.scene);
+                    checkVictory2();
+                  }
                 }
+
                 const sphere = new THREE.Mesh(geometry, fireMaterial);
                 sphere.scale.set(5.5, 5.5, 5.5);
                 sphere.position.set(
@@ -341,7 +409,10 @@
     function highlightEnemy() {
       const worldPosition = new THREE.Vector3();
       if (selectedModel) {
-        if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+        const checkBoss = selectedModel.name.substring(
+          selectedModel.name.length - 6,
+        );
+        if (selectedModel.name === "ENEMY_ZAKO_3_0" || checkBoss === "1861_0") {
           selectedModel.updateMatrixWorld();
           worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
           const dx = worldPosition.x - camera.position.x;
@@ -350,16 +421,30 @@
           const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
           highlight.position.set(5, 3, -15);
           highlightDiv.innerHTML = `<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Enemy is ${distance} meters away.</p></div>`;
-          bracket1.position.set(
-            worldPosition.x,
-            worldPosition.y,
-            worldPosition.z,
-          );
-          bracket2.position.set(
-            worldPosition.x,
-            worldPosition.y,
-            worldPosition.z,
-          );
+          if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+            bracket1.position.set(
+              worldPosition.x,
+              worldPosition.y,
+              worldPosition.z,
+            );
+            bracket2.position.set(
+              worldPosition.x,
+              worldPosition.y,
+              worldPosition.z,
+            );
+          } else {
+            bracket1.position.set(
+              worldPosition.x,
+              worldPosition.y - 6,
+              worldPosition.z,
+            );
+            bracket2.position.set(
+              worldPosition.x,
+              worldPosition.y - 6,
+              worldPosition.z,
+            );
+          }
+
           bracket1.lookAt(camera.position);
           bracket2.lookAt(camera.position);
           scene.add(bracket1);
@@ -382,13 +467,29 @@
       targetx = clickedPosition.x;
       targety = clickedPosition.y;
       targetz = clickedPosition.z;
+      let checkBoss = "";
+
       if (selectedModel) {
+        checkBoss = selectedModel.name.substring(selectedModel.name.length - 6);
         selectedModel.updateMatrixWorld();
         worldPosition.setFromMatrixPosition(selectedModel.matrixWorld);
-
         if (selectedModel.name === "ENEMY_ZAKO_3_0") {
           targetx = worldPosition.x;
           targety = worldPosition.y + 5;
+          targetz = worldPosition.z;
+
+          const targetObj = {
+            x: targetx,
+            y: targety,
+            z: targetz,
+            model: selectedModel,
+          };
+
+          if (rifleOrSaber === true && ammo > 0)
+            prevTargetCoords.push(targetObj);
+        } else if (checkBoss === "1861_0") {
+          targetx = worldPosition.x;
+          targety = worldPosition.y;
           targetz = worldPosition.z;
 
           const targetObj = {
@@ -406,9 +507,11 @@
       if (
         rifleOrSaber === false &&
         selectedModel &&
-        selectedModel.name === "ENEMY_ZAKO_3_0"
-      )
+        (selectedModel.name === "ENEMY_ZAKO_3_0" || checkBoss === "1861_0")
+      ) {
         moving = true;
+      }
+
       if (rifleOrSaber === true && ammo > 0) fireBeam();
     }
 
@@ -535,6 +638,21 @@
         intervalID = setInterval(enemyShoot, 3000);
       }
 
+      if (!intervalID2) {
+        intervalID2 = setInterval(bossAction, 1150);
+      }
+
+      if (boss && boss.scene) {
+        boss.scene.lookAt(camera.position);
+        boss.scene.rotateY((3 * Math.PI) / 2);
+        if (bossDirection && bossMoving) {
+          boss.scene.position.sub(bossDirection.clone().multiplyScalar(0.5));
+          setTimeout(() => {
+            bossMoving = false;
+          }, 900);
+        }
+      }
+
       explosionList.forEach((explosion) => {
         explosion.rotation.x += 0.01;
         explosion.rotation.y += 0.01;
@@ -564,7 +682,6 @@
           previousSelectedModel.model = selectedModel;
           previousSelectedModel.deleted = false;
         }
-        // previousSelectedMoel is causing the models to not be removed, need to fix bug
       } else {
         // No intersection, clear the selected model
         selectedModel = null;
@@ -596,15 +713,16 @@
             setTimeout(() => {
               meleeAnimation = false;
               if (previousSelectedModel.model) {
-                const parentSceneId =
+                let parentSceneId =
                   previousSelectedModel.model.parent?.parent?.parent?.parent
                     ?.uuid;
+
                 if (parentSceneId !== undefined) {
+                  // This statement is to check for normal zakus
                   const parentScene = parentScenes[parentSceneId];
                   if (parentScene) {
                     scene.remove(parentScene);
                     previousSelectedModel.deleted = true;
-                    console.log("removed");
                     killCounter++;
                     for (let i = 0; i < enemies.length; i++) {
                       const enemyScene = enemies[i].scene.uuid;
@@ -615,6 +733,12 @@
                     checkVictory();
                   }
                 }
+
+                if (previousSelectedModel.model.name !== "ENEMY_ZAKO_3_0") {
+                  scene.remove(boss.scene);
+                  checkVictory2();
+                }
+
                 const sphere = new THREE.Mesh(geometry, fireMaterial);
                 sphere.scale.set(5.5, 5.5, 5.5);
                 if (targetx && targety && targetz)
@@ -705,7 +829,7 @@
       ]);
     scene.background = spaceTexture;
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 1; i++) {
       addEnemy();
     }
 
@@ -713,7 +837,8 @@
       addAsteroid();
     }
 
-    let intervalID: any = null;
+    let intervalID: ReturnType<typeof setInterval> | null = null;
+    let intervalID2: ReturnType<typeof setInterval> | null = null;
 
     animate();
   }
@@ -760,6 +885,23 @@
     <div class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400">
       <h1 class="text-xl p-2 font-mono font-semiboldbold">
         ALL ENEMIES HAVE BEEN DEFEATED.
+      </h1>
+    </div>
+  </div>
+</div>
+
+<div
+  class="border-4 border-blue-400 w-[300px] fixed text-neutral-400 my-16 mx-16 items-end right-0 opening-line openLonger hidden"
+  id="boss-battle"
+>
+  <div class="border-4 border-cyan-400 h-full">
+    <div
+      class="border-4 border-blue-400 h-full bg-opacity-50 bg-blue-400 flex flex-col justify-around"
+      id="boss-dialogue"
+    >
+      <img src="char.webp" alt="char" class="p-2" />
+      <h1 class="text-xl p-2 font-mono font-semiboldbold">
+        Let's test the performance of the Federation's mobile suit!
       </h1>
     </div>
   </div>
