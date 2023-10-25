@@ -37,11 +37,16 @@
 
     const gamename = document.createElement("h1");
     gamename.innerText = "Simulation Game";
-    gamename.classList.add("text-cyan-400", "font-mono", "font-semibold");
+    gamename.classList.add(
+      "text-cyan-400",
+      "font-mono",
+      "font-semibold",
+      "css3dText",
+    );
 
     const playBtn = document.createElement("button");
     let playClicked = false;
-    playBtn.classList.add("menu-buttons");
+    playBtn.classList.add("menu-buttons", "css3dText");
     playBtn.innerText = "Play";
     playBtn.addEventListener("click", () => {
       playClicked = !playClicked;
@@ -52,7 +57,7 @@
 
     const controlsBtn = document.createElement("button");
     let controlsClicked = false;
-    controlsBtn.classList.add("menu-buttons");
+    controlsBtn.classList.add("menu-buttons", "css3dText");
     controlsBtn.innerText = "Controls";
     controlsBtn.addEventListener("click", () => {
       controlsClicked = !controlsClicked;
@@ -63,7 +68,7 @@
 
     const creditBtn = document.createElement("button");
     let creditsClicked = false;
-    creditBtn.classList.add("menu-buttons");
+    creditBtn.classList.add("menu-buttons", "css3dText");
     creditBtn.innerText = "Credits";
     creditBtn.addEventListener("click", () => {
       creditsClicked = !creditsClicked;
@@ -74,7 +79,7 @@
 
     const aboutBtn = document.createElement("button");
     let aboutClicked = false;
-    aboutBtn.classList.add("menu-buttons");
+    aboutBtn.classList.add("menu-buttons", "css3dText");
     aboutBtn.innerText = "About";
     aboutBtn.addEventListener("click", () => {
       aboutClicked = !aboutClicked;
@@ -90,12 +95,16 @@
     const creditBtnObj = new CSS3DObject(creditBtn);
     const aboutBtnObj = new CSS3DObject(aboutBtn);
     logoObj.position.set(0, 200, -300);
-    gamenameObj.scale.set(1.5, 1.5, 1.5);
+    gamenameObj.scale.set(0.15, 0.15, 0.15);
     gamenameObj.position.set(0, 75, -300);
     playBtnObj.position.set(0, 25, -300);
+    playBtnObj.scale.set(0.1, 0.1, 0.1);
     controlsBtnObj.position.set(0, -25, -300);
+    controlsBtnObj.scale.set(0.1, 0.1, 0.1);
     creditBtnObj.position.set(0, -75, -300);
+    creditBtnObj.scale.set(0.1, 0.1, 0.1);
     aboutBtnObj.position.set(0, -125, -300);
+    aboutBtnObj.scale.set(0.1, 0.1, 0.1);
 
     scene.add(logoObj);
     scene.add(gamenameObj);

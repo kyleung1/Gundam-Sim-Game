@@ -29,7 +29,7 @@
   padding-bottom: 5px;
   padding-left: 5px;
   padding-right: 5px;
-  width: 25%;
+  width: 100%;
   color: cyan;
   font-family: monospace;
   font-weight: bold;
@@ -38,8 +38,13 @@
 .menu-buttons:hover {
   /* background-color: white; */
   /* border-left: solid skyblue 1px; */
-  border-top: solid skyblue 1px;
-  border-bottom: solid skyblue 1px;
+  border-top: solid skyblue 10px;
+  border-bottom: solid skyblue 10px;
+}
+
+.css3dText {
+  transform-style: preserve-3d;
+  font-size: 1000%;
 }
 
 @keyframes openLine {

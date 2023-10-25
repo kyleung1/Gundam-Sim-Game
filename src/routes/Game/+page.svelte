@@ -420,8 +420,8 @@
           const dz = worldPosition.z - camera.position.z;
           const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
           highlight.position.set(5, 3, -15);
-          highlightDiv.innerHTML = `<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Enemy is ${distance} meters away.</p></div>`;
           if (selectedModel.name === "ENEMY_ZAKO_3_0") {
+            highlightDiv.innerHTML = `<div class='w-48'><h1 class='text-cyan-400 underline'>ENEMY_ZAKO_3_0</h1><p class='text-cyan-400'>Enemy is ${distance} meters away.</p></div>`;
             bracket1.position.set(
               worldPosition.x,
               worldPosition.y,
@@ -433,6 +433,7 @@
               worldPosition.z,
             );
           } else {
+            highlightDiv.innerHTML = `<div class='w-48'><h1 class='text-cyan-400 underline'>RED_COMET_ZAKU</h1><p class='text-cyan-400'>Enemy is ${distance} meters away.</p></div>`;
             bracket1.position.set(
               worldPosition.x,
               worldPosition.y - 6,
