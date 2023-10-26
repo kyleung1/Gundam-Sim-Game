@@ -165,13 +165,14 @@
 
     function optionSelected(button: CSS3DObject) {
       const originalPosition = button.position.clone();
-      button.position.x += 10;
+      if (button.position.x < 1000) button.position.x += 10;
       setTimeout(() => {
         button.position.set(
           originalPosition.x,
           originalPosition.y,
           originalPosition.z,
         );
+        button.position.x += 0;
       }, 800);
     }
 
