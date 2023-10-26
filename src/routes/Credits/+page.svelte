@@ -63,6 +63,9 @@
           if (asteroid && asteroid.scene) {
             scene.remove(asteroid.scene);
           }
+          if (redZaku && redZaku.scene) {
+            scene.remove(redZaku.scene);
+          }
           scene.add(gundamModel);
         });
       }
@@ -84,6 +87,9 @@
           }
           if (asteroid && asteroid.scene) {
             scene.remove(asteroid.scene);
+          }
+          if (redZaku && redZaku.scene) {
+            scene.remove(redZaku.scene);
           }
           scene.add(gltfScene.scene);
         });
@@ -108,6 +114,9 @@
           if (asteroid && asteroid.scene) {
             scene.remove(asteroid.scene);
           }
+          if (redZaku && redZaku.scene) {
+            scene.remove(redZaku.scene);
+          }
           scene.add(gltfScene.scene);
         });
       }
@@ -129,6 +138,9 @@
           }
           if (asteroid && asteroid.scene) {
             scene.remove(asteroid.scene);
+          }
+          if (redZaku && redZaku.scene) {
+            scene.remove(redZaku.scene);
           }
           scene.add(gltfScene.scene);
         });
@@ -152,6 +164,36 @@
           if (zaku && zaku.scene) {
             scene.remove(zaku.scene);
           }
+          if (redZaku && redZaku.scene) {
+            scene.remove(redZaku.scene);
+          }
+
+          scene.add(gltfScene.scene);
+        });
+      }
+
+      let redZaku: GLTF;
+      function addRedZaku() {
+        glftLoader.load("char-zaku/scene.glb", (gltfScene) => {
+          redZaku = gltfScene;
+          gltfScene.scene.scale.set(5, 5, 5);
+          gltfScene.scene.position.set(0, 0, -15.5);
+          gltfScene.scene.rotateY((3 * Math.PI) / 2);
+          if (gundamModel) {
+            scene.remove(gundamModel);
+          }
+          if (beamSaberModel && beamSaberModel.scene) {
+            scene.remove(beamSaberModel.scene);
+          }
+          if (beamRifle && beamRifle.scene) {
+            scene.remove(beamRifle.scene);
+          }
+          if (zaku && zaku.scene) {
+            scene.remove(zaku.scene);
+          }
+          if (asteroid && asteroid.scene) {
+            scene.remove(asteroid.scene);
+          }
 
           scene.add(gltfScene.scene);
         });
@@ -174,6 +216,9 @@
         } else if (callFunction === "addAsteroid") {
           callFunction = "";
           addAsteroid();
+        } else if (callFunction === "addRedZaku") {
+          callFunction = "";
+          addRedZaku();
         }
       }
 
@@ -222,6 +267,16 @@
         Creator: <a
           href="https://sketchfab.com/3d-models/gundam-zako-3-0fbcea94273d43ecbb0e9d278bb1ea8e"
           class="hover:underline">Hiago Tadeu</a
+        >
+      </p>
+      <button
+        class="text-3xl text-center mt-10 hover:underline"
+        on:click={() => (callFunction = "addRedZaku")}>Red Zaku</button
+      >
+      <p>
+        Creator: <a
+          href="https://sketchfab.com/3d-models/low-poly-ms-gundam-ms-06s-chars-zaku-ii-ddb4574a9eb14b55b6cb52f5ae77f279"
+          class="hover:underline">tipatat</a
         >
       </p>
       <button

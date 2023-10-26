@@ -39,9 +39,9 @@
     gamename.innerText = "Simulation Game";
     gamename.classList.add(
       "text-cyan-400",
-      "font-mono",
-      "font-semibold",
       "css3dText",
+      "full-width",
+      "text-center",
     );
 
     const playBtn = document.createElement("button");
@@ -164,7 +164,15 @@
     };
 
     function optionSelected(button: CSS3DObject) {
+      const originalPosition = button.position.clone();
       button.position.x += 10;
+      setTimeout(() => {
+        button.position.set(
+          originalPosition.x,
+          originalPosition.y,
+          originalPosition.z,
+        );
+      }, 800);
     }
 
     function animate() {

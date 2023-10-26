@@ -35,6 +35,12 @@
   font-weight: bold;
 }
 
+.full-width {
+  width: 100%;
+  font-family: monospace;
+  font-weight: bold;
+}
+
 .menu-buttons:hover {
   /* background-color: white; */
   /* border-left: solid skyblue 1px; */
@@ -43,7 +49,6 @@
 }
 
 .css3dText {
-  transform-style: preserve-3d;
   font-size: 1000%;
 }
 
