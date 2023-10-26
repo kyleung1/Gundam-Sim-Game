@@ -52,6 +52,7 @@
       playClicked = !playClicked;
       setTimeout(() => {
         window.location.href = "/Game";
+        playClicked = !playClicked;
       }, 700);
     });
 
@@ -63,6 +64,7 @@
       controlsClicked = !controlsClicked;
       setTimeout(() => {
         window.location.href = "/Controls";
+        controlsClicked = !controlsClicked;
       }, 700);
     });
 
@@ -74,6 +76,7 @@
       creditsClicked = !creditsClicked;
       setTimeout(() => {
         window.location.href = "/Credits";
+        creditsClicked = !creditsClicked;
       }, 700);
     });
 
@@ -85,6 +88,7 @@
       aboutClicked = !aboutClicked;
       setTimeout(() => {
         window.location.href = "/About";
+        aboutClicked = !aboutClicked;
       }, 700);
     });
 
@@ -165,17 +169,16 @@
 
     function optionSelected(button: CSS3DObject) {
       const originalPosition = button.position.clone();
-      if (button.position.x < 1000) button.position.x += 10;
+      if (button.position.x < 1000) {
+        button.position.x += 10;
+        console.log(button);
+      }
       setTimeout(() => {
         button.position.set(
           originalPosition.x,
           originalPosition.y,
           originalPosition.z,
         );
-        playClicked = false;
-        controlsClicked = false;
-        creditsClicked = false;
-        aboutClicked = false;
       }, 800);
     }
 
