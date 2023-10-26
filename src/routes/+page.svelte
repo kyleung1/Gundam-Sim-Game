@@ -167,19 +167,16 @@
       oldy = event.y;
     };
 
+    let timeoutIdButton: ReturnType<typeof setTimeout>;
     function optionSelected(button: CSS3DObject) {
-      const originalPosition = button.position.clone();
+      clearTimeout(timeoutIdButton);
       if (button.position.x < 1000) {
         button.position.x += 10;
-        console.log(button);
+        console.log(button.position.x);
       }
-      setTimeout(() => {
-        button.position.set(
-          originalPosition.x,
-          originalPosition.y,
-          originalPosition.z,
-        );
-      }, 800);
+      timeoutIdButton = setTimeout(() => {
+        button.position.x = 0;
+      }, 100);
     }
 
     function animate() {
