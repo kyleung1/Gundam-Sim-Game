@@ -172,7 +172,10 @@
           originalPosition.y,
           originalPosition.z,
         );
-        button.position.x += 0;
+        playClicked = false;
+        controlsClicked = false;
+        creditsClicked = false;
+        aboutClicked = false;
       }, 800);
     }
 
