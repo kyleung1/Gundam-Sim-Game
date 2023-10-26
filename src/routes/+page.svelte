@@ -171,7 +171,7 @@
     function optionSelected(button: CSS3DObject) {
       clearTimeout(timeoutIdButton);
       if (button.position.x < 1000) {
-        button.position.x += 10;
+        button.position.x += 20;
         console.log(button.position.x);
       }
       timeoutIdButton = setTimeout(() => {
